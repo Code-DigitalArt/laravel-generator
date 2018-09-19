@@ -117,7 +117,7 @@ class InfyOmGeneratorServiceProvider extends ServiceProvider
             return new VueJsLayoutPublishCommand();
         });
 
-	    $this->app->singleton('infoym.seed', function ($app) {
+	    $this->app->singleton('infyom.seed', function ($app) {
 		    return new SeedGeneratorCommand();
 	    });
 
@@ -140,7 +140,7 @@ class InfyOmGeneratorServiceProvider extends ServiceProvider
             'infyom.rollback',
             'infyom.vuejs',
             'infyom.publish.vuejs',
-	        'infoym.seed'
+	        'infyom.seed'
         ]);
     }
 }

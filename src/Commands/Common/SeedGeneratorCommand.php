@@ -13,7 +13,7 @@ class SeedGeneratorCommand extends BaseCommand
 	 *
 	 * @var string
 	 */
-	protected $name = 'infoym.seed';
+	protected $name = 'infyom.seed';
 
 	/**
 	 * The console command description.
