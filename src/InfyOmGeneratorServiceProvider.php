@@ -21,6 +21,7 @@ use InfyOm\Generator\Commands\Scaffold\RequestsGeneratorCommand;
 use InfyOm\Generator\Commands\Scaffold\ScaffoldGeneratorCommand;
 use InfyOm\Generator\Commands\Scaffold\ViewsGeneratorCommand;
 use InfyOm\Generator\Commands\VueJs\VueJsGeneratorCommand;
+use InfyOm\Generator\Commands\Common\SeedGeneratorCommand;
 
 class InfyOmGeneratorServiceProvider extends ServiceProvider
 {
@@ -116,6 +117,10 @@ class InfyOmGeneratorServiceProvider extends ServiceProvider
             return new VueJsLayoutPublishCommand();
         });
 
+	    $this->app->singleton('infoym.seed', function ($app) {
+		    return new SeedGeneratorCommand();
+	    });
+
         $this->commands([
             'infyom.publish',
             'infyom.api',
@@ -135,6 +140,7 @@ class InfyOmGeneratorServiceProvider extends ServiceProvider
             'infyom.rollback',
             'infyom.vuejs',
             'infyom.publish.vuejs',
+	        'infoym.seed'
         ]);
     }
 }

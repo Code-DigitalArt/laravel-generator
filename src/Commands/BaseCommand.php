@@ -9,6 +9,7 @@ use InfyOm\Generator\Generators\API\APIRequestGenerator;
 use InfyOm\Generator\Generators\API\APIRoutesGenerator;
 use InfyOm\Generator\Generators\API\APITestGenerator;
 use InfyOm\Generator\Generators\MigrationGenerator;
+use InfyOm\Generator\Generators\SeedGenerator;
 use InfyOm\Generator\Generators\ModelGenerator;
 use InfyOm\Generator\Generators\RepositoryGenerator;
 use InfyOm\Generator\Generators\RepositoryTestGenerator;
@@ -69,6 +70,11 @@ class BaseCommand extends Command
         if (!$this->isSkip('repository')) {
             $repositoryGenerator = new RepositoryGenerator($this->commandData);
             $repositoryGenerator->generate();
+        }
+
+        if (!$this->isSkip('seeder')) {
+        	$seedGenerator = new SeedGenerator($this->commandData);
+	        $seedGenerator->generate();
         }
     }
 
