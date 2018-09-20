@@ -29,7 +29,7 @@ class SeedGenerator extends BaseGenerator
 
 	public function generate()
 	{
-		$templateData = get_template('seed', 'laravel-generator');
+		$templateData = get_template('seed.seed', 'laravel-generator');
 
 		$templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
@@ -38,7 +38,7 @@ class SeedGenerator extends BaseGenerator
 
 		FileUtil::createFile($this->path, $this->fileName, $templateData);
 
-		$this->commandData->commandComment("\nMigration created: ");
+		$this->commandData->commandComment("\nSeed created: ");
 		$this->commandData->commandInfo($this->fileName);
 	}
 
