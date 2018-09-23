@@ -62,6 +62,11 @@ class ViewGenerator extends BaseGenerator
                 $this->generateShowFields();
                 $this->generateShow();
             }
+
+	        if (in_array('pivot', $viewsToBeGenerated)) {
+		        $this->generateShowFields();
+		        $this->generateShow();
+	        }
         } else {
             $this->generateTable();
             $this->generateIndex();
@@ -70,6 +75,7 @@ class ViewGenerator extends BaseGenerator
             $this->generateUpdate();
             $this->generateShowFields();
             $this->generateShow();
+	        $this->generatePivot();
         }
 
         $this->commandData->commandComment('Views created: ');
@@ -368,6 +374,16 @@ class ViewGenerator extends BaseGenerator
 
         FileUtil::createFile($this->path, 'show.blade.php', $templateData);
         $this->commandData->commandInfo('show.blade.php created');
+    }
+
+	private function generatePivot()
+	{
+		$templateData = get_template('scaffold.views.pivot_fields', $this->templateType);
+
+		$templateData = fill_template($this->commandData->dynamicVars, $templateData);
+
+		FileUtil::createFile($this->path, 'pivot.blade.php', $templateData);
+		$this->commandData->commandInfo('pivot.blade.php created');
     }
 
     public function rollback()

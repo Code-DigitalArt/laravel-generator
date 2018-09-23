@@ -2,6 +2,7 @@
 
 namespace InfyOm\Generator;
 
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Support\ServiceProvider;
 use InfyOm\Generator\Commands\API\APIControllerGeneratorCommand;
 use InfyOm\Generator\Commands\API\APIGeneratorCommand;
@@ -22,6 +23,7 @@ use InfyOm\Generator\Commands\Scaffold\ScaffoldGeneratorCommand;
 use InfyOm\Generator\Commands\Scaffold\ViewsGeneratorCommand;
 use InfyOm\Generator\Commands\VueJs\VueJsGeneratorCommand;
 use InfyOm\Generator\Commands\Common\SeedGeneratorCommand;
+
 
 class InfyOmGeneratorServiceProvider extends ServiceProvider
 {
