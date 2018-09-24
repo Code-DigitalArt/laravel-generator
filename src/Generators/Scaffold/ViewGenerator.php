@@ -66,7 +66,7 @@ class ViewGenerator extends BaseGenerator
                 $this->generateShow();
             }
 
-	        if (in_array('pivot', $viewsToBeGenerated)) {
+	        if (in_array('relations', $viewsToBeGenerated)) {
 		        $this->generateShowFields();
 		        $this->generateShow();
 	        }
@@ -78,7 +78,7 @@ class ViewGenerator extends BaseGenerator
             $this->generateUpdate();
             $this->generateShowFields();
             $this->generateShow();
-	        $this->generatePivot();
+	        $this->generateRelations();
         }
 
         $this->commandData->commandComment('Views created: ');
@@ -334,7 +334,19 @@ class ViewGenerator extends BaseGenerator
     {
         $templateData = get_template('scaffold.views.create', $this->templateType);
 
-        $templateData = fill_template($this->commandData->dynamicVars, $templateData);
+
+
+	    $relationships = $this->commandData->relations;
+
+	    $relationsView = [];
+
+	    foreach ($relationships as $relationship)
+	    {
+		    $relationshipName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relationship->inputs[0]));
+	    	$relationsView[] = str_replace('relations',$relationshipName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
+	    }
+	    $templateData = str_replace('$RELATIONS$', implode("\n\n", $relationsView), $templateData);
+	    $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
         FileUtil::createFile($this->path, 'create.blade.php', $templateData);
         $this->commandData->commandInfo('create.blade.php created');
@@ -379,21 +391,12 @@ class ViewGenerator extends BaseGenerator
         $this->commandData->commandInfo('show.blade.php created');
     }
 
-	private function generatePivot()
+	private function generateRelations()
 	{
 		$relationships = $this->commandData->relations;
 
-		$oneToOne = [];
-		$oneToMany = [];
-		$manyToOne = [];
-		$manyToMany = [];
-
 		$fildsFile = $this->commandData->config->options["fieldsFile"];
 		$fildsFileLocation = substr($fildsFile, 0, strrpos($fildsFile, "/") +1);
-
-
-
-//		$templateData = get_template('scaffold.views.pivot_fields', $this->templateType);
 
 		foreach ($relationships as $relation)
 		{
@@ -421,12 +424,14 @@ class ViewGenerator extends BaseGenerator
 				}
 			}
 
-//			$templateData = get_template('scaffold.views.fields', $this->templateType);
-			$templateData = get_template('scaffold.views.pivot_fields', $this->templateType);
+			$relationName = (string)$relation->inputs[0];
+
+			$templateData = get_template('scaffold.views.relations_fields', $this->templateType);
 			$templateData = fill_template($this->commandData->dynamicVars, $templateData);
+			$templateData = str_replace('$RELATION$', preg_replace('/(.*?[a-z]{1})([A-Z]{1}.*?)/','${1} ${2}',$relationName), $templateData);
 			$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
 
-			$fileString = $relation->inputs[0] . '.blade.php';
+			$fileString = $relationName . '.blade.php';
 
 			$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
 
@@ -434,19 +439,6 @@ class ViewGenerator extends BaseGenerator
 			FileUtil::createFile($this->path, $fileName, $templateData);
 			$this->commandData->commandInfo( $fileName);
 
-//			if($relation->type == '1t1'){
-//				array_push($oneToOne, $relation);
-//
-//			}
-//			if($relation->type == '1tm'){
-//				array_push($oneToMany, $relation);
-//			}
-//			if($relation->type == 'mt1'){
-//				array_push($manyToOne, $relation);
-//			}
-//			if($relation->type == 'mtm'){
-//				array_push($manyToMany, $relation);
-//			}
 		}
 
 
@@ -504,7 +496,6 @@ class ViewGenerator extends BaseGenerator
             'edit.blade.php',
             'show.blade.php',
             'show_fields.blade.php',
-	        'pivot.blade.php',
         ];
 
         if ($this->commandData->getAddOn('datatables')) {
