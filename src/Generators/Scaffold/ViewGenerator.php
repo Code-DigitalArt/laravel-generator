@@ -2,8 +2,11 @@
 
 namespace InfyOm\Generator\Generators\Scaffold;
 
+use Complex\Exception;
 use Illuminate\Support\Str;
 use InfyOm\Generator\Common\CommandData;
+use InfyOm\Generator\Common\GeneratorField;
+use InfyOm\Generator\Common\GeneratorFieldRelation;
 use InfyOm\Generator\Generators\BaseGenerator;
 use InfyOm\Generator\Utils\FileUtil;
 use InfyOm\Generator\Utils\GeneratorFieldsInputUtil;
@@ -378,13 +381,118 @@ class ViewGenerator extends BaseGenerator
 
 	private function generatePivot()
 	{
-		$templateData = get_template('scaffold.views.pivot_fields', $this->templateType);
+		$relationships = $this->commandData->relations;
 
-		$templateData = fill_template($this->commandData->dynamicVars, $templateData);
+		$oneToOne = [];
+		$oneToMany = [];
+		$manyToOne = [];
+		$manyToMany = [];
 
-		FileUtil::createFile($this->path, 'pivot.blade.php', $templateData);
-		$this->commandData->commandInfo('pivot.blade.php created');
+		$fildsFile = $this->commandData->config->options["fieldsFile"];
+		$fildsFileLocation = substr($fildsFile, 0, strrpos($fildsFile, "/") +1);
+
+
+
+//		$templateData = get_template('scaffold.views.pivot_fields', $this->templateType);
+
+		foreach ($relationships as $relation)
+		{
+			$relationfieldsFile = $fildsFileLocation . $relation->inputs[0] . '.json';
+			$relatedFields = $this->getDataFromFieldsFile($relationfieldsFile);
+			$htmlFields = [];
+
+			foreach ($relatedFields as $relatedField)
+			{
+					if(!$relatedField->inForm) {
+						continue;
+					}
+
+
+				$fieldTemplate = HTMLFieldGenerator::generateHTML($relatedField, $this->templateType);
+
+				if (!empty($fieldTemplate)){
+					$fieldTemplate = fill_template_with_field_data(
+						$this->commandData->dynamicVars,
+						$this->commandData->fieldNamesMapping,
+						$fieldTemplate,
+						$relatedField
+					);
+					$htmlFields[] = $fieldTemplate;
+				}
+			}
+
+//			$templateData = get_template('scaffold.views.fields', $this->templateType);
+			$templateData = get_template('scaffold.views.pivot_fields', $this->templateType);
+			$templateData = fill_template($this->commandData->dynamicVars, $templateData);
+			$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
+
+			$fileString = $relation->inputs[0] . '.blade.php';
+
+			$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
+
+
+			FileUtil::createFile($this->path, $fileName, $templateData);
+			$this->commandData->commandInfo( $fileName);
+
+//			if($relation->type == '1t1'){
+//				array_push($oneToOne, $relation);
+//
+//			}
+//			if($relation->type == '1tm'){
+//				array_push($oneToMany, $relation);
+//			}
+//			if($relation->type == 'mt1'){
+//				array_push($manyToOne, $relation);
+//			}
+//			if($relation->type == 'mtm'){
+//				array_push($manyToMany, $relation);
+//			}
+		}
+
+
     }
+
+	private function getDataFromFieldsFile($fildsFile)
+	{
+		try {
+			if (file_exists($fildsFile)) {
+				$filePath = $fildsFile;
+			} elseif (file_exists(base_path($fildsFile))) {
+				$filePath = base_path($fildsFile);
+			} else {
+				$schemaFileDirector = config('infyom.laravel_generator.path.schema_files');
+				$filePath = $schemaFileDirector.$fildsFile;
+			}
+
+			if (!file_exists($filePath)) {
+				echo 'Fields file not found';
+				exit;
+			}
+
+			$fileContents = file_get_contents($filePath);
+			$jsonData = json_decode($fileContents, true);
+			$relatedFields = [];
+
+			$this->fields = [];
+			foreach ($jsonData as $field) {
+				if (isset($field['type']) && $field['relation']) {
+					$relation = GeneratorFieldRelation::parseRelation($field['relation']);
+				} else {
+					$relatedFields[] = GeneratorField::parseFieldFromFile($field);
+					if (isset($field['relation'])) {
+						$relation = GeneratorFieldRelation::parseRelation($field['relation']);
+					}
+				}
+			}
+
+
+		} catch (Exception $e) {
+			$e->getMessage();
+			exit;
+		}
+
+		return $relatedFields;
+	}
 
     public function rollback()
     {
@@ -396,6 +504,7 @@ class ViewGenerator extends BaseGenerator
             'edit.blade.php',
             'show.blade.php',
             'show_fields.blade.php',
+	        'pivot.blade.php',
         ];
 
         if ($this->commandData->getAddOn('datatables')) {
