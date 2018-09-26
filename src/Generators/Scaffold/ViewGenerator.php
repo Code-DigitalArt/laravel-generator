@@ -339,13 +339,23 @@ class ViewGenerator extends BaseGenerator
 	    $relationships = $this->commandData->relations;
 
 	    $relationsView = [];
+	    $relationsViewJs = [];
 
-	    foreach ($relationships as $relationship)
+	    foreach ($relationships as $relation)
 	    {
-		    $relationshipName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relationship->inputs[0]));
-	    	$relationsView[] = str_replace('relations',$relationshipName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
+	    	if(!$relation->inputs[0] == ''){
+			    $relationName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation->inputs[0]));
+			    $relationNameJs = (string)strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relation->inputs[0]));
+
+			    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
+
+			    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
+		    }
 	    }
+
+
 	    $templateData = str_replace('$RELATIONS$', implode("\n\n", $relationsView), $templateData);
+	    $templateData = str_replace('$JSRELATIONS$', implode("\n\n", $relationsViewJs), $templateData);
 	    $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
         FileUtil::createFile($this->path, 'create.blade.php', $templateData);
@@ -356,6 +366,20 @@ class ViewGenerator extends BaseGenerator
     {
         $templateData = get_template('scaffold.views.edit', $this->templateType);
 
+	    $relationships = $this->commandData->relations;
+
+	    $relationsView = [];
+
+	    foreach ($relationships as $relation)
+	    {
+	    	if(!$relation->inputs[0] == '')
+		    {
+		    	$relationName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation->inputs[0]));
+		    	$relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
+		    }
+	    }
+
+	    $templateData = str_replace('$RELATIONS$', implode("\n\n", $relationsView), $templateData);
         $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
         FileUtil::createFile($this->path, 'edit.blade.php', $templateData);
@@ -395,14 +419,16 @@ class ViewGenerator extends BaseGenerator
 	{
 		$relationships = $this->commandData->relations;
 
-		$fildsFile = $this->commandData->config->options["fieldsFile"];
-		$fildsFileLocation = substr($fildsFile, 0, strrpos($fildsFile, "/") +1);
+		$fieldsFile = $this->commandData->config->options["fieldsFile"];
+		$fieldsFileLocation = substr($fieldsFile, 0, strrpos($fieldsFile, "/") +1);
 
 		foreach ($relationships as $relation)
 		{
-			$relationfieldsFile = $fildsFileLocation . $relation->inputs[0] . '.json';
-			$relatedFields = $this->getDataFromFieldsFile($relationfieldsFile);
-			$htmlFields = [];
+			if(!$relation->inputs[0] == ''){
+				$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
+				$relatedFields = $this->getDataFromFieldsFile($relationfieldsFile);
+				$htmlFields = [];
+
 
 			foreach ($relatedFields as $relatedField)
 			{
@@ -411,7 +437,7 @@ class ViewGenerator extends BaseGenerator
 					}
 
 
-				$fieldTemplate = HTMLFieldGenerator::generateHTML($relatedField, $this->templateType);
+				$fieldTemplate = HTMLFieldGenerator::generateJavascript($relatedField, $this->templateType);
 
 				if (!empty($fieldTemplate)){
 					$fieldTemplate = fill_template_with_field_data(
@@ -428,8 +454,10 @@ class ViewGenerator extends BaseGenerator
 
 			$templateData = get_template('scaffold.views.relations_fields', $this->templateType);
 			$templateData = fill_template($this->commandData->dynamicVars, $templateData);
+			$templateData = str_replace('$RELATIONJS$', strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relationName)), $templateData);
 			$templateData = str_replace('$RELATION$', preg_replace('/(.*?[a-z]{1})([A-Z]{1}.*?)/','${1} ${2}',$relationName), $templateData);
 			$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
+			$templateData = str_replace('$FIELD_ARRAY_NAME$', $relationName , $templateData);
 
 			$fileString = $relationName . '.blade.php';
 
@@ -438,22 +466,22 @@ class ViewGenerator extends BaseGenerator
 
 			FileUtil::createFile($this->path, $fileName, $templateData);
 			$this->commandData->commandInfo( $fileName);
-
+			}
 		}
 
 
     }
 
-	private function getDataFromFieldsFile($fildsFile)
+	private function getDataFromFieldsFile($fieldsFile)
 	{
 		try {
-			if (file_exists($fildsFile)) {
-				$filePath = $fildsFile;
-			} elseif (file_exists(base_path($fildsFile))) {
-				$filePath = base_path($fildsFile);
+			if (file_exists($fieldsFile)) {
+				$filePath = $fieldsFile;
+			} elseif (file_exists(base_path($fieldsFile))) {
+				$filePath = base_path($fieldsFile);
 			} else {
 				$schemaFileDirector = config('infyom.laravel_generator.path.schema_files');
-				$filePath = $schemaFileDirector.$fildsFile;
+				$filePath = $schemaFileDirector.$fieldsFile;
 			}
 
 			if (!file_exists($filePath)) {
