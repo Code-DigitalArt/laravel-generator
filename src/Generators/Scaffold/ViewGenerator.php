@@ -344,12 +344,14 @@ class ViewGenerator extends BaseGenerator
 	    foreach ($relationships as $relation)
 	    {
 	    	if(!$relation->inputs[0] == ''){
-			    $relationName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation->inputs[0]));
-			    $relationNameJs = (string)strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relation->inputs[0]));
+			    if(empty($relation->inputs[1])){
+				    $relationName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation->inputs[0]));
+				    $relationNameJs = (string)strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relation->inputs[0]));
 
-			    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
+				    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
 
-			    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
+				    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
+			    }
 		    }
 	    }
 
@@ -425,47 +427,52 @@ class ViewGenerator extends BaseGenerator
 		foreach ($relationships as $relation)
 		{
 			if(!$relation->inputs[0] == ''){
-				$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
-				$relatedFields = $this->getDataFromFieldsFile($relationfieldsFile);
-				$htmlFields = [];
+				if(empty($relation->inputs[1]))
+				{
+					$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
+					$relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
+					$htmlFields         = [];
 
 
-			foreach ($relatedFields as $relatedField)
-			{
-					if(!$relatedField->inForm) {
-						continue;
+					foreach ($relatedFields as $relatedField)
+					{
+						if (!$relatedField->inForm)
+						{
+							continue;
+						}
+
+						$fieldTemplate = HTMLFieldGenerator::generateJavascript($relatedField, $this->templateType);
+
+						if (!empty($fieldTemplate))
+						{
+							$fieldTemplate = fill_template_with_field_data(
+								$this->commandData->dynamicVars,
+								$this->commandData->fieldNamesMapping,
+								$fieldTemplate,
+								$relatedField
+							);
+							$htmlFields[]  = $fieldTemplate;
+						}
+
 					}
 
+					$relationName = (string) $relation->inputs[0];
 
-				$fieldTemplate = HTMLFieldGenerator::generateJavascript($relatedField, $this->templateType);
+					$templateData = get_template('scaffold.views.relations_fields', $this->templateType);
+					$templateData = fill_template($this->commandData->dynamicVars, $templateData);
+					$templateData = str_replace('$RELATIONJS$', strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relationName)), $templateData);
+					$templateData = str_replace('$RELATION$', preg_replace('/(.*?[a-z]{1})([A-Z]{1}.*?)/', '${1} ${2}', $relationName), $templateData);
+					$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
+					$templateData = str_replace('$FIELD_ARRAY_NAME$', $relationName, $templateData);
 
-				if (!empty($fieldTemplate)){
-					$fieldTemplate = fill_template_with_field_data(
-						$this->commandData->dynamicVars,
-						$this->commandData->fieldNamesMapping,
-						$fieldTemplate,
-						$relatedField
-					);
-					$htmlFields[] = $fieldTemplate;
+					$fileString = $relationName . '.blade.php';
+
+					$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
+
+
+					FileUtil::createFile($this->path, $fileName, $templateData);
+					$this->commandData->commandInfo($fileName);
 				}
-			}
-
-			$relationName = (string)$relation->inputs[0];
-
-			$templateData = get_template('scaffold.views.relations_fields', $this->templateType);
-			$templateData = fill_template($this->commandData->dynamicVars, $templateData);
-			$templateData = str_replace('$RELATIONJS$', strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relationName)), $templateData);
-			$templateData = str_replace('$RELATION$', preg_replace('/(.*?[a-z]{1})([A-Z]{1}.*?)/','${1} ${2}',$relationName), $templateData);
-			$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
-			$templateData = str_replace('$FIELD_ARRAY_NAME$', $relationName , $templateData);
-
-			$fileString = $relationName . '.blade.php';
-
-			$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
-
-
-			FileUtil::createFile($this->path, $fileName, $templateData);
-			$this->commandData->commandInfo( $fileName);
 			}
 		}
 
