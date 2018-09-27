@@ -47,6 +47,17 @@ class ControllerGenerator extends BaseGenerator
         }
 
         $templateData = fill_template($this->commandData->dynamicVars, $templateData);
+		$modelName = $this->commandData->dynamicVars["\$MODEL_NAME_CAMEL$"];
+        $relations = $this->commandData->relations;
+        $store_relations = [];
+	    foreach ($relations as $relation)
+	    {
+		    if(!$relation->inputs[0] == ''){
+				$cc_relation = camel_case($relation->inputs[0]);
+				$store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relation()->createMany(\$request->input('relation'));}");
+		    }
+        }
+        $templateData = str_replace('$STORE_RELATIONS$', implode("\n\n", $store_relations), $templateData);
 
         FileUtil::createFile($this->path, $this->fileName, $templateData);
 
