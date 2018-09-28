@@ -10,15 +10,18 @@ use $NAMESPACE_REPOSITORY$\$MODEL_NAME$Repository;
 use Flash;
 use $NAMESPACE_APP$\Http\Controllers\AppBaseController;
 use Response;
+$MANY_TO_MANY_MODEL_REPOSITORIES$
 
 class $MODEL_NAME$Controller extends AppBaseController
 {
     /** @var  $MODEL_NAME$Repository */
     private $$MODEL_NAME_CAMEL$Repository;
+    $MODEL_REPO_ATTRIBUTES$
 
-    public function __construct($MODEL_NAME$Repository $$MODEL_NAME_CAMEL$Repo)
+    public function __construct($MODEL_NAME$Repository $$MODEL_NAME_CAMEL$Repo$VAR_MODEL_REPOS$)
     {
         $this->$MODEL_NAME_CAMEL$Repository = $$MODEL_NAME_CAMEL$Repo;
+        $CONSTRUCT_MODEL_REPOS$
     }
 
     /**
@@ -39,7 +42,8 @@ class $MODEL_NAME$Controller extends AppBaseController
      */
     public function create()
     {
-        return view('$VIEW_PREFIX$$MODEL_NAME_PLURAL_SNAKE$.create');
+        $GET_MODEL_REPOS$
+        return view('$VIEW_PREFIX$$MODEL_NAME_PLURAL_SNAKE$.create')$SEND_MODEL_REPOS$;
     }
 
     /**

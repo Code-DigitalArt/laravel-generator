@@ -47,17 +47,44 @@ class ControllerGenerator extends BaseGenerator
         }
 
         $templateData = fill_template($this->commandData->dynamicVars, $templateData);
+
+
 		$modelName = $this->commandData->dynamicVars["\$MODEL_NAME_CAMEL$"];
         $relations = $this->commandData->relations;
         $store_relations = [];
+        $manyToManyModelRepositories = [];
+        $modelRepoAttributes = [];
+        $varModelRepos = [];
+        $constructModelRepos = [];
+        $getModelRepos = [];
+        $sendModelRepos = [];
+
+
 	    foreach ($relations as $relation)
 	    {
 		    if(!$relation->inputs[0] == ''){
-				$cc_relation = camel_case($relation->inputs[0]);
-				$store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relation()->createMany(\$request->input('relation'));}");
+		    	if(!empty($relation->inputs[1])){
+				    $cc_relation = camel_case($relation->inputs[0]);
+				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relation()->createMany(\$request->input('relation'));}");
+				    $manyToManyModelRepositories[] = str_replace('Relation', $relation->inputs[0],'use App\Repositories\RelationRepository;');
+				    $modelRepoAttributes[] = str_replace('relation', $cc_relation, 'private $relationRepository;');
+				    $varModelRepos[] = str_replace('Relation', $relation->inputs[0], ', RelationRepository') . str_replace('relation', $cc_relation, '$relationRepo');
+				    $constructModelRepos[] = str_replace('relation', $cc_relation, '$this->relationRepository = $relationRepo;');
+				    $getModelRepos[] = str_replace( 'relation', $cc_relation, '$'.$cc_relation. 's = $this->relationRepository->all();');
+				    $sendModelRepos[] = str_replace('relation', $cc_relation, "->with('relations', \$relations)");
+			    }
+
 		    }
-        }
-        $templateData = str_replace('$STORE_RELATIONS$', implode("\n\n", $store_relations), $templateData);
+	    }
+
+	    $templateData = str_replace('$MANY_TO_MANY_MODEL_REPOSITORIES$', implode("\n", $manyToManyModelRepositories), $templateData);
+	    $templateData = str_replace('$MODEL_REPO_ATTRIBUTES$', implode("\n", $modelRepoAttributes), $templateData);
+	    $templateData = str_replace('$VAR_MODEL_REPOS$', implode('', $varModelRepos), $templateData);
+	    $templateData = str_replace('$CONSTRUCT_MODEL_REPOS$', implode("\n", $constructModelRepos), $templateData);
+	    $templateData = str_replace('$GET_MODEL_REPOS$', implode("\n", $getModelRepos), $templateData);
+	    $templateData = str_replace('$SEND_MODEL_REPOS$', implode('', $sendModelRepos), $templateData);
+	    $templateData = str_replace('$STORE_RELATIONS$', implode("\n\n", $store_relations), $templateData);
+
 
         FileUtil::createFile($this->path, $this->fileName, $templateData);
 
