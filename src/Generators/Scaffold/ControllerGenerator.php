@@ -63,9 +63,13 @@ class ControllerGenerator extends BaseGenerator
 	    foreach ($relations as $relation)
 	    {
 		    if(!$relation->inputs[0] == ''){
-		    	if(!empty($relation->inputs[1])){
-				    $cc_relation = camel_case($relation->inputs[0]);
+			    $cc_relation = camel_case($relation->inputs[0]);
+			    if(empty($relation->inputs[1])){
 				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relation()->createMany(\$request->input('relation'));}");
+			    }else {
+				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relation()->createMany(\$request->input('relations'));}");
+			    }
+			    if(!empty($relation->inputs[1])){
 				    $manyToManyModelRepositories[] = str_replace('Relation', $relation->inputs[0],'use App\Repositories\RelationRepository;');
 				    $modelRepoAttributes[] = str_replace('relation', $cc_relation, 'private $relationRepository;');
 				    $varModelRepos[] = str_replace('Relation', $relation->inputs[0], ', RelationRepository') . str_replace('relation', $cc_relation, '$relationRepo');
