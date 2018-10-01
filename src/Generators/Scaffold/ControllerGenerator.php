@@ -59,20 +59,42 @@ class ControllerGenerator extends BaseGenerator
         $getModelRepos = [];
         $sendModelRepos = [];
 
+	    $fieldsFile = $this->commandData->config->options["fieldsFile"];
+	    $fieldsFileLocation = substr($fieldsFile, 0, strrpos($fieldsFile, "/") +1);
+
 
 	    foreach ($relations as $relation)
 	    {
 		    if(!$relation->inputs[0] == ''){
 			    $cc_relation = camel_case($relation->inputs[0]);
+
+			    $relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
+			    $relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
+
+			    foreach ($relatedFields as $field){
+			    	if(!empty($field->htmlValues[0])){
+			    		if(strstr($field->htmlValues[0], 'foreign')){
+			    			$foreignArray = explode(':', $field->htmlValues[0]);
+						    $manyToManyModelRepositories[] = str_replace('Relation', $foreignArray[1],'use App\Repositories\RelationRepository;');
+						    $modelRepoAttributes[] = str_replace('relation', camel_case($foreignArray[1]), 'private $relationRepository;');
+						    $varModelRepos[] = str_replace('Relation', $foreignArray[1], ', RelationRepository ') . str_replace('relation', camel_case($foreignArray[1]), '$relationRepo');
+						    $constructModelRepos[] = str_replace('relation', camel_case($foreignArray[1]), '$this->relationRepository = $relationRepo;');
+						    $getModelRepos[] = str_replace( 'relation', camel_case($foreignArray[1]), '$'.camel_case($foreignArray[1]). 's = $this->relationRepository->all();');
+						    $sendModelRepos[] = str_replace('relation', camel_case($foreignArray[1]), "->with('relations', \$relations)");
+					    }
+				    }
+			    }
+
+
 			    if(empty($relation->inputs[1])){
-				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relation()->createMany(\$request->input('relation'));}");
+				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relations()->createMany(\$request->input('relation'));}");
 			    }else {
-				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relation()->createMany(\$request->input('relations'));}");
+				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relations()->createMany(\$request->input('relations'));}");
 			    }
 			    if(!empty($relation->inputs[1])){
 				    $manyToManyModelRepositories[] = str_replace('Relation', $relation->inputs[0],'use App\Repositories\RelationRepository;');
 				    $modelRepoAttributes[] = str_replace('relation', $cc_relation, 'private $relationRepository;');
-				    $varModelRepos[] = str_replace('Relation', $relation->inputs[0], ', RelationRepository') . str_replace('relation', $cc_relation, '$relationRepo');
+				    $varModelRepos[] = str_replace('Relation', $relation->inputs[0], ', RelationRepository ') . str_replace('relation', $cc_relation, '$relationRepo');
 				    $constructModelRepos[] = str_replace('relation', $cc_relation, '$this->relationRepository = $relationRepo;');
 				    $getModelRepos[] = str_replace( 'relation', $cc_relation, '$'.$cc_relation. 's = $this->relationRepository->all();');
 				    $sendModelRepos[] = str_replace('relation', $cc_relation, "->with('relations', \$relations)");

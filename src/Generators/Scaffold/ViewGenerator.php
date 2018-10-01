@@ -462,7 +462,7 @@ class ViewGenerator extends BaseGenerator
 
 					$templateData = str_replace('$RELATIONJS$', strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relationName)), $templateData);
 					$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
-					$templateData = str_replace('$FIELD_ARRAY_NAME$', $relationName, $templateData);
+					$templateData = str_replace('$FIELD_ARRAY_NAME$', camel_case($relationName), $templateData);
 
 				} else {
 					$templateData = get_template('scaffold.views.relations_many_to_many_fields', $this->templateType);

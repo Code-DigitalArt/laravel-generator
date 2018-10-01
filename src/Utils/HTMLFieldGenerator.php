@@ -79,14 +79,18 @@ class HTMLFieldGenerator
 				break;
 			case 'select':
 			case 'enum':
+
 				$fieldTemplate = get_template('scaffold.fields.select'.'_js', $templateType);
 				$radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
-
-				$fieldTemplate = str_replace(
-					'$INPUT_ARR$',
-					GeneratorFieldsInputUtil::prepareKeyValueArrayStr($radioLabels),
-					$fieldTemplate
-				);
+				if(array_key_exists('foreign',$radioLabels)){
+					$fieldTemplate = str_replace('$FOREIGN$', camel_case($radioLabels['foreign']), $fieldTemplate);
+				} else {
+					$fieldTemplate = str_replace(
+						'$INPUT_ARR$',
+						GeneratorFieldsInputUtil::prepareKeyValueArrayStr($radioLabels),
+						$fieldTemplate
+					);
+				}
 				break;
 			case 'checkbox':
 				$fieldTemplate = get_template('scaffold.fields.checkbox'.'_js', $templateType);
