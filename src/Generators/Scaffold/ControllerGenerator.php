@@ -89,7 +89,7 @@ class ControllerGenerator extends BaseGenerator
 			    if(empty($relation->inputs[1])){
 				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relations()->createMany(\$request->input('relation'));}");
 			    }else {
-				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relations()->createMany(\$request->input('relations'));}");
+				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relations\') == null){'.'$'.$modelName."->relations()->sync(\$request->input('relations'));}");
 			    }
 			    if(!empty($relation->inputs[1])){
 				    $manyToManyModelRepositories[] = str_replace('Relation', $relation->inputs[0],'use App\Repositories\RelationRepository;');

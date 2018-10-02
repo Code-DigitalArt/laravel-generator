@@ -466,7 +466,48 @@ class ViewGenerator extends BaseGenerator
 
 				} else {
 					$templateData = get_template('scaffold.views.relations_many_to_many_fields', $this->templateType);
+
+					$pivotJson = rtrim(ucfirst(camel_case($relation->inputs[1])), 's') . '.json';
+
+					$pivotFields = $this->getDataFromFieldsFile($fieldsFileLocation . $pivotJson);
+
+					$numberOfPivots = 0;
 					$cc_relation = camel_case($relationName);
+					$htmlFields = [];
+
+					foreach ($pivotFields as $pivotField)
+					{
+						if ($pivotField->inForm) {
+							$numberOfPivots++;
+						}
+					}
+
+					if($numberOfPivots > 0){
+
+						foreach ($pivotFields as $pivotField)
+						{
+							if(!$pivotField->inForm){
+								continue;
+							}
+							$fieldTemplate = HTMLFieldGenerator::generateHTML($pivotField, $this->templateType);
+
+							if (!empty($fieldTemplate))
+							{
+								$fieldTemplate = fill_template_with_field_data(
+									$this->commandData->dynamicVars,
+									$this->commandData->fieldNamesMapping,
+									$fieldTemplate,
+									$pivotField
+								);
+								$htmlFields[]  = $fieldTemplate;
+							}
+						}
+						$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
+						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="'.$cc_relation.'s[ {{$'.$cc_relation.'->name}}]">{{$'.$cc_relation.'->name}}></div>', $templateData);
+					} else {
+						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="$'.$cc_relation.'[ {{$'.$cc_relation.'->name}}]"></div>', $templateData);
+					}
+
 					$templateData = str_replace('$CCRELATION$', $cc_relation, $templateData);
 
 				}
