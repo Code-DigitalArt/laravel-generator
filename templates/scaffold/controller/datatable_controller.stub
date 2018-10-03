@@ -102,8 +102,8 @@ class $MODEL_NAME$Controller extends AppBaseController
 
             return redirect(route('$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$.index'));
         }
-
-        return view('$VIEW_PREFIX$$MODEL_NAME_PLURAL_SNAKE$.edit')->with('$MODEL_NAME_CAMEL$', $$MODEL_NAME_CAMEL$);
+        $GET_MODEL_REPOS$
+        return view('$VIEW_PREFIX$$MODEL_NAME_PLURAL_SNAKE$.edit')->with('$MODEL_NAME_CAMEL$', $$MODEL_NAME_CAMEL$)$SEND_MODEL_REPOS$;
     }
 
     /**

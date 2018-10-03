@@ -78,7 +78,7 @@ class ViewGenerator extends BaseGenerator
             $this->generateUpdate();
             $this->generateShowFields();
             $this->generateShow();
-	        $this->generateRelations();
+	        $this->generateCreateRelations();
         }
 
         $this->commandData->commandComment('Views created: ');
@@ -346,7 +346,7 @@ class ViewGenerator extends BaseGenerator
 	    	if(!$relation->inputs[0] == ''){
 
 			    $relationName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation->inputs[0]));
-			    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
+			    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_create')");
 
 			    if(empty($relation->inputs[1])){
 				    $relationNameJs = (string)strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relation->inputs[0]));
@@ -417,7 +417,7 @@ class ViewGenerator extends BaseGenerator
         $this->commandData->commandInfo('show.blade.php created');
     }
 
-	private function generateRelations()
+	private function generateCreateRelations()
 	{
 		$relationships = $this->commandData->relations;
 
@@ -503,7 +503,7 @@ class ViewGenerator extends BaseGenerator
 							}
 						}
 						$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
-						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="'.$cc_relation.'s[ {{$'.$cc_relation.'->name}}]">{{$'.$cc_relation.'->name}}></div>', $templateData);
+						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="'.$cc_relation.'s[ {{$'.$cc_relation.'->name}}]"{{$'.$cc_relation.'->name}}></div>', $templateData);
 					} else {
 						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="$'.$cc_relation.'[ {{$'.$cc_relation.'->name}}]"></div>', $templateData);
 					}
@@ -512,10 +512,13 @@ class ViewGenerator extends BaseGenerator
 
 				}
 				$templateData = str_replace('$RELATION$', preg_replace('/(.*?[a-z]{1})([A-Z]{1}.*?)/', '${1} ${2}', $relationName), $templateData);
-				$fileString = $relationName . '.blade.php';
+				$fileString = $relationName . '_create.blade.php';
 				$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
 				$templateData = fill_template($this->commandData->dynamicVars, $templateData);
+
 				FileUtil::createFile($this->path, $fileName, $templateData);
+
+
 				$this->commandData->commandInfo($fileName);
 			}
 		}
