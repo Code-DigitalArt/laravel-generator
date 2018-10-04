@@ -79,6 +79,7 @@ class ViewGenerator extends BaseGenerator
             $this->generateShowFields();
             $this->generateShow();
 	        $this->generateCreateRelations();
+	        $this->generateEditRelations();
         }
 
         $this->commandData->commandComment('Views created: ');
@@ -377,7 +378,7 @@ class ViewGenerator extends BaseGenerator
 	    	if(!$relation->inputs[0] == '')
 		    {
 		    	$relationName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation->inputs[0]));
-		    	$relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
+		    	$relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_edit')");
 		    }
 	    }
 
@@ -523,6 +524,130 @@ class ViewGenerator extends BaseGenerator
 			}
 		}
 
+
+    }
+
+	private function generateEditRelations()
+	{
+		$relationships = $this->commandData->relations;
+
+		$fieldsFile = $this->commandData->config->options["fieldsFile"];
+		$fieldsFileLocation = substr($fieldsFile, 0, strrpos($fieldsFile, "/") +1);
+
+		foreach ($relationships as $relation)
+		{
+			if(!$relation->inputs[0] == ''){
+
+				$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
+				$relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
+				$htmlFields         = [];
+				$relationName = (string) $relation->inputs[0];
+
+
+				if(empty($relation->inputs[1]))
+				{
+					$templateData = get_template('scaffold.views.relations_edit_one_to_many', $this->templateType);
+
+					foreach ($relatedFields as $relatedField)
+					{
+						if (!$relatedField->inForm)
+						{
+							continue;
+						}
+
+						$fieldTemplate = '<div class="form-group col-sm-6">{{ $$RELATION$->$COLUMN$ }}</div>';
+
+//						$fieldTemplate = HTMLFieldGenerator::generateJavascript($relatedField, $this->templateType);
+						$fieldTemplate = str_replace( '$RELATION$', camel_case($relationName), $fieldTemplate);
+						$fieldTemplate = str_replace( '$COLUMN$', $relatedField->name, $fieldTemplate);
+
+						if (!empty($fieldTemplate))
+						{
+							$fieldTemplate = fill_template_with_field_data(
+								$this->commandData->dynamicVars,
+								$this->commandData->fieldNamesMapping,
+								$fieldTemplate,
+								$relatedField
+							);
+							$htmlFields[]  = $fieldTemplate;
+						}
+
+					}
+
+//					$templateData = str_replace('$RELATIONJS$', strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relationName)), $templateData);
+					$templateData = str_replace('$RELATION_COLUMN$', implode("\n\n", $htmlFields), $templateData);
+					$templateData = str_replace('$CCRELATION$', camel_case($relationName), $templateData);
+
+				} else {
+					$templateData = get_template('scaffold.views.relations_many_to_many_fields', $this->templateType);
+
+					$pivotJson = rtrim(ucfirst(camel_case($relation->inputs[1])), 's') . '.json';
+
+					$pivotFields = $this->getDataFromFieldsFile($fieldsFileLocation . $pivotJson);
+
+					$numberOfPivots = 0;
+					$cc_relation = camel_case($relationName);
+					$htmlFields = [];
+
+					foreach ($pivotFields as $pivotField)
+					{
+						if ($pivotField->inForm) {
+							$numberOfPivots++;
+						}
+					}
+
+					if($numberOfPivots > 0){
+
+						foreach ($pivotFields as $pivotField)
+						{
+							if(!$pivotField->inForm){
+								continue;
+							}
+							$fieldTemplate = HTMLFieldGenerator::generateHTML($pivotField, $this->templateType);
+
+							if (!empty($fieldTemplate))
+							{
+								$fieldTemplate = fill_template_with_field_data(
+									$this->commandData->dynamicVars,
+									$this->commandData->fieldNamesMapping,
+									$fieldTemplate,
+									$pivotField
+								);
+								$htmlFields[]  = $fieldTemplate;
+							}
+						}
+						$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
+						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="'.$cc_relation.'s[ {{$'.$cc_relation.'->name}}]"{{$'.$cc_relation.'->name}}></div>', $templateData);
+					} else {
+						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="$'.$cc_relation.'[ {{$'.$cc_relation.'->name}}]"></div>', $templateData);
+					}
+
+					$templateData = str_replace('$CCRELATION$', $cc_relation, $templateData);
+
+				}
+				$templateData = str_replace('$RELATION$', preg_replace('/(.*?[a-z]{1})([A-Z]{1}.*?)/', '${1} ${2}', $relationName), $templateData);
+				$fileString = $relationName . '_edit.blade.php';
+				$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
+				$templateData = fill_template($this->commandData->dynamicVars, $templateData);
+
+				FileUtil::createFile($this->path, $fileName, $templateData);
+
+
+				$this->commandData->commandInfo($fileName);
+			}
+		}
+
+		// Select Template File
+
+
+		/**
+		 *
+		 * For each edit display column information add to array
+		 *
+		*/
+
+		// Add edit and delete button routes
+		// Create File
 
     }
 

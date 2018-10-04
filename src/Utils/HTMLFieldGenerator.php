@@ -26,7 +26,11 @@ class HTMLFieldGenerator
             case 'enum':
                 $fieldTemplate = get_template('scaffold.fields.select', $templateType);
                 $radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
-
+		        if(array_key_exists('foreign',$radioLabels)){
+			        $fieldTemplate = get_template('scaffold.fields.select_foreign', $templateType);
+			        $fieldTemplate = str_replace('$FOREIGN$', camel_case($radioLabels['foreign']), $fieldTemplate);
+			        break;
+		        }
                 $fieldTemplate = str_replace(
                     '$INPUT_ARR$',
                     GeneratorFieldsInputUtil::prepareKeyValueArrayStr($radioLabels),
