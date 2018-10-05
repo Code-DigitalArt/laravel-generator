@@ -372,6 +372,7 @@ class ViewGenerator extends BaseGenerator
 	    $relationships = $this->commandData->relations;
 
 	    $relationsView = [];
+	    $relationsViewJs = [];
 
 	    foreach ($relationships as $relation)
 	    {
@@ -379,10 +380,16 @@ class ViewGenerator extends BaseGenerator
 		    {
 		    	$relationName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation->inputs[0]));
 		    	$relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_edit')");
+
+			    if(empty($relation->inputs[1])){
+				    $relationNameJs = (string)strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relation->inputs[0]));
+				    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
+			    }
 		    }
 	    }
 
 	    $templateData = str_replace('$RELATIONS$', implode("\n\n", $relationsView), $templateData);
+	    $templateData = str_replace('$JSRELATIONS$', implode("\n\n", $relationsViewJs), $templateData);
         $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
         FileUtil::createFile($this->path, 'edit.blade.php', $templateData);
@@ -541,6 +548,7 @@ class ViewGenerator extends BaseGenerator
 				$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
 				$relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
 				$htmlFields         = [];
+				$viewFields         = [];
 				$relationName = (string) $relation->inputs[0];
 
 
@@ -555,11 +563,15 @@ class ViewGenerator extends BaseGenerator
 							continue;
 						}
 
-						$fieldTemplate = '<div class="form-group col-sm-6">{{ $$RELATION$->$COLUMN$ }}</div>';
+						$viewField = '<div class="form-group col-sm-6">{{ $$RELATION$->$COLUMN$ }}</div>';
 
-//						$fieldTemplate = HTMLFieldGenerator::generateJavascript($relatedField, $this->templateType);
-						$fieldTemplate = str_replace( '$RELATION$', camel_case($relationName), $fieldTemplate);
-						$fieldTemplate = str_replace( '$COLUMN$', $relatedField->name, $fieldTemplate);
+
+						$viewField = str_replace( '$RELATION$', camel_case($relationName), $viewField);
+						$viewField = str_replace( '$COLUMN$', $relatedField->name, $viewField);
+
+						$viewFields[] = $viewField;
+
+						$fieldTemplate = HTMLFieldGenerator::generateEditJavascript($relatedField, $this->templateType);
 
 						if (!empty($fieldTemplate))
 						{
@@ -572,10 +584,12 @@ class ViewGenerator extends BaseGenerator
 							$htmlFields[]  = $fieldTemplate;
 						}
 
+
 					}
 
-//					$templateData = str_replace('$RELATIONJS$', strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relationName)), $templateData);
-					$templateData = str_replace('$RELATION_COLUMN$', implode("\n\n", $htmlFields), $templateData);
+					$templateData = str_replace('$RELATIONJS$', strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relationName)), $templateData);
+					$templateData = str_replace('$RELATION_COLUMN$', implode("\n\n", $viewFields), $templateData);
+					$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
 					$templateData = str_replace('$CCRELATION$', camel_case($relationName), $templateData);
 
 				} else {
@@ -628,6 +642,8 @@ class ViewGenerator extends BaseGenerator
 				$templateData = str_replace('$RELATION$', preg_replace('/(.*?[a-z]{1})([A-Z]{1}.*?)/', '${1} ${2}', $relationName), $templateData);
 				$fileString = $relationName . '_edit.blade.php';
 				$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
+				$templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
+
 				$templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
 				FileUtil::createFile($this->path, $fileName, $templateData);

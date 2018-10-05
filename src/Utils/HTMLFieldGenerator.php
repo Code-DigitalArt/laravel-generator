@@ -87,6 +87,7 @@ class HTMLFieldGenerator
 				$fieldTemplate = get_template('scaffold.fields.select'.'_js', $templateType);
 				$radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
 				if(array_key_exists('foreign',$radioLabels)){
+					$fieldTemplate = get_template('scaffold.fields.select'.'_foreign', $templateType);
 					$fieldTemplate = str_replace('$FOREIGN$', camel_case($radioLabels['foreign']), $fieldTemplate);
 				} else {
 					$fieldTemplate = str_replace(
@@ -108,6 +109,66 @@ class HTMLFieldGenerator
 			case 'radio':
 				$fieldTemplate = get_template('scaffold.fields.radio_group'.'_js', $templateType);
 				$radioTemplate = get_template('scaffold.fields.radio'.'_js', $templateType);
+
+				$radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
+
+				$radioButtons = [];
+				foreach ($radioLabels as $label => $value) {
+					$radioButtonTemplate = str_replace('$LABEL$', $label, $radioTemplate);
+					$radioButtonTemplate = str_replace('$VALUE$', $value, $radioButtonTemplate);
+					$radioButtons[] = $radioButtonTemplate;
+				}
+				$fieldTemplate = str_replace('$RADIO_BUTTONS$', implode("\n", $radioButtons), $fieldTemplate);
+				break;
+		}
+
+		return $fieldTemplate;
+	}
+
+	public static function generateEditJavascript(GeneratorField $field, $templateType)
+	{
+		$fieldTemplate = '';
+
+		switch ($field->htmlType) {
+			case 'text':
+			case 'textarea':
+			case 'date':
+			case 'file':
+			case 'email':
+			case 'password':
+				$fieldTemplate = get_template('scaffold.fields.'.$field->htmlType. '_edit', $templateType);
+				break;
+			case 'number':
+				$fieldTemplate = get_template('scaffold.fields.'.$field->htmlType.'_edit', $templateType);
+				break;
+			case 'select':
+			case 'enum':
+
+				$fieldTemplate = get_template('scaffold.fields.select'.'_edit', $templateType);
+				$radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
+				if(array_key_exists('foreign',$radioLabels)){
+					$fieldTemplate = get_template('scaffold.fields.select'.'_foreign_edit', $templateType);
+					$fieldTemplate = str_replace('$FOREIGN$', camel_case($radioLabels['foreign']), $fieldTemplate);
+				} else {
+					$fieldTemplate = str_replace(
+						'$INPUT_ARR$',
+						GeneratorFieldsInputUtil::prepareKeyValueArrayStr($radioLabels),
+						$fieldTemplate
+					);
+				}
+				break;
+			case 'checkbox':
+				$fieldTemplate = get_template('scaffold.fields.checkbox'.'_edit', $templateType);
+				if (count($field->htmlValues) > 0) {
+					$checkboxValue = $field->htmlValues[0];
+				} else {
+					$checkboxValue = 1;
+				}
+				$fieldTemplate = str_replace('$CHECKBOX_VALUE$', $checkboxValue, $fieldTemplate);
+				break;
+			case 'radio':
+				$fieldTemplate = get_template('scaffold.fields.radio_group'.'_edit', $templateType);
+				$radioTemplate = get_template('scaffold.fields.radio'.'_edit', $templateType);
 
 				$radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
 
