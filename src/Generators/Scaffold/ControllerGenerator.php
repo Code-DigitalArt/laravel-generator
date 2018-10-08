@@ -5,6 +5,7 @@ namespace InfyOm\Generator\Generators\Scaffold;
 use InfyOm\Generator\Common\CommandData;
 use InfyOm\Generator\Generators\BaseGenerator;
 use InfyOm\Generator\Utils\FileUtil;
+use InfyOm\Generator\Utils\GeneratorFieldsInputUtil;
 
 class ControllerGenerator extends BaseGenerator
 {
@@ -53,6 +54,7 @@ class ControllerGenerator extends BaseGenerator
         $relations = $this->commandData->relations;
         $store_relations = [];
         $manyToManyModelRepositories = [];
+        $manyToOneModelRepositories = [];
         $modelRepoAttributes = [];
         $varModelRepos = [];
         $constructModelRepos = [];
@@ -63,6 +65,7 @@ class ControllerGenerator extends BaseGenerator
 	    $fieldsFileLocation = substr($fieldsFile, 0, strrpos($fieldsFile, "/") +1);
 
 
+
 	    foreach ($relations as $relation)
 	    {
 		    if(!$relation->inputs[0] == ''){
@@ -70,6 +73,15 @@ class ControllerGenerator extends BaseGenerator
 
 			    $relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
 			    $relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
+
+			    if($relation->type == 'mt1'){
+					$manyToManyModelRepositories[] = str_replace('Relation', $relation->inputs[0],'use App\Repositories\RelationRepository;');
+				    $modelRepoAttributes[] = str_replace('relation', $cc_relation, 'private $relationRepository;');
+				    $varModelRepos[] = str_replace('Relation', $cc_relation, ', RelationRepository ') . str_replace('relation', $cc_relation, '$relationRepo');
+				    $constructModelRepos[] = str_replace('relation', $cc_relation, '$this->relationRepository = $relationRepo;');
+				    $getModelRepos[] = str_replace( 'relation', $cc_relation, '$'.$cc_relation. 's = $this->relationRepository->all();');
+				    $sendModelRepos[] = str_replace('relation', $cc_relation, "->with('relations', \$relations)");
+			    }
 
 			    foreach ($relatedFields as $field){
 			    	if(!empty($field->htmlValues[0])){

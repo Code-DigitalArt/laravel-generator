@@ -63,6 +63,8 @@ class $MODEL_NAME$Controller extends AppBaseController
 
         Flash::success('$MODEL_NAME_HUMAN$ saved successfully.');
 
+        if($request->input('redirect') == 'back'){ return redirect()->back(); }
+
         return redirect(route('$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$.index'));
     }
 
@@ -152,6 +154,6 @@ class $MODEL_NAME$Controller extends AppBaseController
 
         Flash::success('$MODEL_NAME_HUMAN$ deleted successfully.');
 
-        return redirect(route('$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$.index'));
+        return redirect()->back();
     }
 }
