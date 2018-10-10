@@ -130,6 +130,8 @@ class $MODEL_NAME$Controller extends AppBaseController
 
         Flash::success('$MODEL_NAME_HUMAN$ updated successfully.');
 
+        if($request->input('redirect') == 'back'){ return redirect()->back(); }
+
         return redirect(route('$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$.index'));
     }
 

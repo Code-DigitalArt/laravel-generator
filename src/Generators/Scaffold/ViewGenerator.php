@@ -547,14 +547,12 @@ class ViewGenerator extends BaseGenerator
 
 				$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
 				$relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
-				$htmlFields         = [];
 				$viewFields         = [];
 				$relationName = (string) $relation->inputs[0];
 
 
 				if(empty($relation->inputs[1]))
 				{
-					$templateData = get_template('scaffold.views.relations_edit_one_to_many', $this->templateType);
 
 					foreach ($relatedFields as $relatedField)
 					{
@@ -562,17 +560,11 @@ class ViewGenerator extends BaseGenerator
 						{
 							continue;
 						}
-
-						$viewField = '<div class="form-group col-sm-6">{{ $$RELATION$->$COLUMN$ }}</div>';
-
-
-						$viewField = str_replace( '$RELATION$', camel_case($relationName), $viewField);
-						$viewField = str_replace( '$COLUMN$', $relatedField->name, $viewField);
-
-						$viewFields[] = $viewField;
-
+						$viewField     = '<div class="form-group col-sm-6">{{ $$RELATION$->$COLUMN$ }}</div>';
+						$viewField     = str_replace('$RELATION$', camel_case($relationName), $viewField);
+						$viewField     = str_replace('$COLUMN$', $relatedField->name, $viewField);
+						$viewFields[]  = $viewField;
 						$fieldTemplate = HTMLFieldGenerator::generateEditJavascript($relatedField, $this->templateType);
-
 						if (!empty($fieldTemplate))
 						{
 							$fieldTemplate = fill_template_with_field_data(
@@ -583,13 +575,14 @@ class ViewGenerator extends BaseGenerator
 							);
 							$htmlFields[]  = $fieldTemplate;
 						}
-
-
 					}
 
-					$templateData = str_replace('$RELATIONJS$', strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relationName)), $templateData);
+					$templateData = get_template('scaffold.views.relations_edit_one_to_many', $this->templateType);
+
 					$templateData = str_replace('$RELATION_COLUMN$', implode("\n\n", $viewFields), $templateData);
-					$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
+
+					$templateData = str_replace('$SCFILEDIR$', snake_case($relationName), $templateData);
+
 					$templateData = str_replace('$CCRELATION$', camel_case($relationName), $templateData);
 
 				} else {
