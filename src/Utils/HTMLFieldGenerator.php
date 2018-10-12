@@ -60,6 +60,9 @@ class HTMLFieldGenerator
                 }
                 $fieldTemplate = str_replace('$RADIO_BUTTONS$', implode("\n", $radioButtons), $fieldTemplate);
                 break;
+	        case 'hidden':
+	        	$fieldTemplate = get_template('scaffold.fields.'.$field->htmlType, $templateType);
+	        	break;
         }
 
         return $fieldTemplate;
