@@ -57,82 +57,166 @@ class BaseCommand extends Command
 
     public function generateCommonItems()
     {
-        if (!$this->commandData->getOption('fromTable') and !$this->isSkip('migration')) {
-            $migrationGenerator = new MigrationGenerator($this->commandData);
-            $migrationGenerator->generate();
-        }
+    	if($this->isGenerate()){
 
-        if (!$this->isSkip('model')) {
-            $modelGenerator = new ModelGenerator($this->commandData);
-            $modelGenerator->generate();
-        }
+		    if (!$this->commandData->getOption('fromTable') and $this->isGenerateOption('migration')) {
+			    $migrationGenerator = new MigrationGenerator($this->commandData);
+			    $migrationGenerator->generate();
+		    }
 
-        if (!$this->isSkip('repository')) {
-            $repositoryGenerator = new RepositoryGenerator($this->commandData);
-            $repositoryGenerator->generate();
-        }
+		    if ($this->isGenerateOption('model')) {
+			    $modelGenerator = new ModelGenerator($this->commandData);
+			    $modelGenerator->generate();
+		    }
 
-        if (!$this->isSkip('seeder')) {
-        	$seedGenerator = new SeedGenerator($this->commandData);
-	        $seedGenerator->generate();
-        }
+		    if ($this->isGenerateOption('repository')) {
+			    $repositoryGenerator = new RepositoryGenerator($this->commandData);
+			    $repositoryGenerator->generate();
+		    }
+
+		    if ($this->isGenerateOption('seeder')) {
+			    $seedGenerator = new SeedGenerator($this->commandData);
+			    $seedGenerator->generate();
+		    }
+	    } else {
+
+		    if (!$this->commandData->getOption('fromTable') and !$this->isSkip('migration')) {
+			    $migrationGenerator = new MigrationGenerator($this->commandData);
+			    $migrationGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('model')) {
+			    $modelGenerator = new ModelGenerator($this->commandData);
+			    $modelGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('repository')) {
+			    $repositoryGenerator = new RepositoryGenerator($this->commandData);
+			    $repositoryGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('seeder')) {
+			    $seedGenerator = new SeedGenerator($this->commandData);
+			    $seedGenerator->generate();
+		    }
+	    }
     }
 
     public function generateAPIItems()
     {
-        if (!$this->isSkip('requests') and !$this->isSkip('api_requests')) {
-            $requestGenerator = new APIRequestGenerator($this->commandData);
-            $requestGenerator->generate();
-        }
+    	if($this->isGenerate()){
 
-        if (!$this->isSkip('controllers') and !$this->isSkip('api_controller')) {
-            $controllerGenerator = new APIControllerGenerator($this->commandData);
-            $controllerGenerator->generate();
-        }
+		    if ($this->isGenerateOption('requests') and $this->isGenerateOption('api_requests')) {
+			    $requestGenerator = new APIRequestGenerator($this->commandData);
+			    $requestGenerator->generate();
+		    }
 
-        if (!$this->isSkip('routes') and !$this->isSkip('api_routes')) {
-            $routesGenerator = new APIRoutesGenerator($this->commandData);
-            $routesGenerator->generate();
-        }
+		    if ($this->isGenerateOption('controllers') and $this->isGenerateOption('api_controller')) {
+			    $controllerGenerator = new APIControllerGenerator($this->commandData);
+			    $controllerGenerator->generate();
+		    }
 
-        if (!$this->isSkip('tests') and $this->commandData->getAddOn('tests')) {
-            $repositoryTestGenerator = new RepositoryTestGenerator($this->commandData);
-            $repositoryTestGenerator->generate();
+		    if ($this->isGenerateOption('routes') and $this->isGenerateOption('api_routes')) {
+			    $routesGenerator = new APIRoutesGenerator($this->commandData);
+			    $routesGenerator->generate();
+		    }
 
-            $testTraitGenerator = new TestTraitGenerator($this->commandData);
-            $testTraitGenerator->generate();
+		    if ($this->isGenerateOption('tests') and $this->commandData->getAddOn('tests')) {
+			    $repositoryTestGenerator = new RepositoryTestGenerator($this->commandData);
+			    $repositoryTestGenerator->generate();
 
-            $apiTestGenerator = new APITestGenerator($this->commandData);
-            $apiTestGenerator->generate();
-        }
+			    $testTraitGenerator = new TestTraitGenerator($this->commandData);
+			    $testTraitGenerator->generate();
+
+			    $apiTestGenerator = new APITestGenerator($this->commandData);
+			    $apiTestGenerator->generate();
+		    }
+
+	    } else {
+
+		    if (!$this->isSkip('requests') and !$this->isSkip('api_requests')) {
+			    $requestGenerator = new APIRequestGenerator($this->commandData);
+			    $requestGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('controllers') and !$this->isSkip('api_controller')) {
+			    $controllerGenerator = new APIControllerGenerator($this->commandData);
+			    $controllerGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('routes') and !$this->isSkip('api_routes')) {
+			    $routesGenerator = new APIRoutesGenerator($this->commandData);
+			    $routesGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('tests') and $this->commandData->getAddOn('tests')) {
+			    $repositoryTestGenerator = new RepositoryTestGenerator($this->commandData);
+			    $repositoryTestGenerator->generate();
+
+			    $testTraitGenerator = new TestTraitGenerator($this->commandData);
+			    $testTraitGenerator->generate();
+
+			    $apiTestGenerator = new APITestGenerator($this->commandData);
+			    $apiTestGenerator->generate();
+		    }
+	    }
     }
 
     public function generateScaffoldItems()
     {
-        if (!$this->isSkip('requests') and !$this->isSkip('scaffold_requests')) {
-            $requestGenerator = new RequestGenerator($this->commandData);
-            $requestGenerator->generate();
-        }
+    	if($this->isGenerate()){
+		    if ($this->isGenerateOption('requests') and $this->isGenerateOption('scaffold_requests')) {
+			    $requestGenerator = new RequestGenerator($this->commandData);
+			    $requestGenerator->generate();
+		    }
 
-        if (!$this->isSkip('controllers') and !$this->isSkip('scaffold_controller')) {
-            $controllerGenerator = new ControllerGenerator($this->commandData);
-            $controllerGenerator->generate();
-        }
+		    if ($this->isGenerateOption('controllers') and $this->isGenerateOption('scaffold_controller')) {
+			    $controllerGenerator = new ControllerGenerator($this->commandData);
+			    $controllerGenerator->generate();
+		    }
 
-        if (!$this->isSkip('views')) {
-            $viewGenerator = new ViewGenerator($this->commandData);
-            $viewGenerator->generate();
-        }
+		    if ($this->isGenerateOption('views')) {
+			    $viewGenerator = new ViewGenerator($this->commandData);
+			    $viewGenerator->generate();
+		    }
 
-        if (!$this->isSkip('routes') and !$this->isSkip('scaffold_routes')) {
-            $routeGenerator = new RoutesGenerator($this->commandData);
-            $routeGenerator->generate();
-        }
+		    if ($this->isGenerateOption('routes') and $this->isGenerateOption('scaffold_routes')) {
+			    $routeGenerator = new RoutesGenerator($this->commandData);
+			    $routeGenerator->generate();
+		    }
 
-        if (!$this->isSkip('menu') and $this->commandData->config->getAddOn('menu.enabled')) {
-            $menuGenerator = new MenuGenerator($this->commandData);
-            $menuGenerator->generate();
-        }
+		    if ($this->isGenerateOption('menu') and $this->commandData->config->getAddOn('menu.enabled')) {
+			    $menuGenerator = new MenuGenerator($this->commandData);
+			    $menuGenerator->generate();
+		    }
+	    } else {
+
+		    if (!$this->isSkip('requests') and !$this->isSkip('scaffold_requests')) {
+			    $requestGenerator = new RequestGenerator($this->commandData);
+			    $requestGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('controllers') and !$this->isSkip('scaffold_controller')) {
+			    $controllerGenerator = new ControllerGenerator($this->commandData);
+			    $controllerGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('views')) {
+			    $viewGenerator = new ViewGenerator($this->commandData);
+			    $viewGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('routes') and !$this->isSkip('scaffold_routes')) {
+			    $routeGenerator = new RoutesGenerator($this->commandData);
+			    $routeGenerator->generate();
+		    }
+
+		    if (!$this->isSkip('menu') and $this->commandData->config->getAddOn('menu.enabled')) {
+			    $menuGenerator = new MenuGenerator($this->commandData);
+			    $menuGenerator->generate();
+		    }
+	    }
+
     }
 
     public function performPostActions($runMigration = false)
@@ -165,6 +249,24 @@ class BaseCommand extends Command
         }
 
         return false;
+    }
+
+	public function isGenerateOption($option)
+	{
+		if ($this->commandData->getOption('generate')){
+			return in_array($option, (array) $this->commandData->getOption('generate'));
+		}
+
+		return false;
+    }
+
+	public function isGenerate()
+	{
+		if ($this->commandData->getOption('generate')){
+			return true;
+		}
+
+		return false;
     }
 
     public function performPostActionsWithMigration()
@@ -244,6 +346,7 @@ class BaseCommand extends Command
             ['datatables', null, InputOption::VALUE_REQUIRED, 'Override datatables settings'],
             ['views', null, InputOption::VALUE_REQUIRED, 'Specify only the views you want generated: index,create,edit,show'],
             ['relations', null, InputOption::VALUE_NONE, 'Specify if you want to pass relationships for fields'],
+	        ['generate', null, InputOption::VALUE_REQUIRED, 'Specify only the file type you want generated (migration,model,controllers,api_controller,scaffold_controller,repository,requests,api_requests,scaffold_requests,routes,api_routes,scaffold_routes,views,tests,menu,dump-autoload)'],
         ];
     }
 
