@@ -59,6 +59,8 @@ class $MODEL_NAME$Controller extends AppBaseController
 
         $$MODEL_NAME_CAMEL$ = $this->$MODEL_NAME_CAMEL$Repository->create($input);
 
+        $MORPH_ONE$
+
         $STORE_RELATIONS$
 
         Flash::success('$MODEL_NAME_HUMAN$ saved successfully.');
@@ -104,8 +106,9 @@ class $MODEL_NAME$Controller extends AppBaseController
 
             return redirect(route('$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$.index'));
         }
+        $GET_POLYMORPHS$
         $GET_MODEL_REPOS$
-        return view('$VIEW_PREFIX$$MODEL_NAME_PLURAL_SNAKE$.edit')->with('$MODEL_NAME_CAMEL$', $$MODEL_NAME_CAMEL$)$SEND_MODEL_REPOS$;
+        return view('$VIEW_PREFIX$$MODEL_NAME_PLURAL_SNAKE$.edit')->with('$MODEL_NAME_CAMEL$', $$MODEL_NAME_CAMEL$)$SEND_MODEL_REPOS$$SEND_POLYMORPHS$;
     }
 
     /**
@@ -127,6 +130,8 @@ class $MODEL_NAME$Controller extends AppBaseController
         }
 
         $$MODEL_NAME_CAMEL$ = $this->$MODEL_NAME_CAMEL$Repository->update($request->all(), $id);
+
+        $STORE_RELATIONS$
 
         Flash::success('$MODEL_NAME_HUMAN$ updated successfully.');
 

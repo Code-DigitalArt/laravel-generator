@@ -48,6 +48,21 @@ class GeneratorFieldRelation
                 $relation = 'hasManyThrough';
                 $relationClass = 'HasManyThrough';
                 break;
+	        case 'pm1':
+		        $functionName = camel_case(str_plural($modelName));
+		        $relation = 'morphOne';
+		        $relationClass = 'MorphOne';
+		        break;
+	        case 'pmm':
+		        $functionName = camel_case(str_plural($modelName));
+		        $relation = 'morphMany';
+		        $relationClass = 'MorphMany';
+		        break;
+	        case 'pm':
+		        $functionName = camel_case($modelName) . 'able';
+		        $relation = 'morphTo';
+		        $relationClass = 'MorphTo';
+		        break;
             default:
                 $functionName = '';
                 $relation = '';
@@ -56,23 +71,30 @@ class GeneratorFieldRelation
         }
 
         if (!empty($functionName) and !empty($relation)) {
-            return $this->generateRelation($functionName, $relation, $relationClass);
+            return $this->generateRelation($functionName, $relation, $relationClass, $modelName);
         }
 
         return '';
     }
 
-    private function generateRelation($functionName, $relation, $relationClass)
+    private function generateRelation($functionName, $relation, $relationClass, $nameModel)
     {
         $inputs = $this->inputs;
         $modelName = array_shift($inputs);
 
-        $template = get_template('model.relationship', 'laravel-generator');
+        if($relation == 'morphTo'){
+        	$template = get_template('model.relationship_polymorph', 'laravel-generator');
+        } elseif (($relation == 'morphOne') || ($relation == 'morphMany')){
+			$template = get_template('model.relationship_polymorphs', 'laravel-generator');
+        } else{
+	        $template = get_template('model.relationship', 'laravel-generator');
+        }
 
-        $template = str_replace('$RELATIONSHIP_CLASS$', $relationClass, $template);
+	    $template = str_replace('$RELATIONSHIP_CLASS$', $relationClass, $template);
         $template = str_replace('$FUNCTION_NAME$', $functionName, $template);
         $template = str_replace('$RELATION$', $relation, $template);
         $template = str_replace('$RELATION_MODEL_NAME$', $modelName, $template);
+        $template = str_replace('$MODEL_NAME$', camel_case($nameModel), $template);
 
         if (count($inputs) > 0) {
             $inputFields = implode("', '", $inputs);

@@ -47,19 +47,21 @@ class ControllerGenerator extends BaseGenerator
             }
         }
 
-        $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
 
-		$modelName = $this->commandData->dynamicVars["\$MODEL_NAME_CAMEL$"];
-        $relations = $this->commandData->relations;
-        $store_relations = [];
-        $manyToManyModelRepositories = [];
-        $manyToOneModelRepositories = [];
-        $modelRepoAttributes = [];
-        $varModelRepos = [];
-        $constructModelRepos = [];
-        $getModelRepos = [];
-        $sendModelRepos = [];
+	    $modelName = $this->commandData->dynamicVars["\$MODEL_NAME_CAMEL$"];
+	    $relations = $this->commandData->relations;
+	    $store_relations = [];
+	    $manyToManyModelRepositories = [];
+	    $manyToOneModelRepositories = [];
+	    $modelRepoAttributes = [];
+	    $varModelRepos = [];
+	    $constructModelRepos = [];
+	    $getModelRepos = [];
+	    $getPolymorph = [];
+	    $sendModelRepos = [];
+	    $sendPolymorph = [];
+	    $polymorphOne = '';
 
 	    $fieldsFile = $this->commandData->config->options["fieldsFile"];
 	    $fieldsFileLocation = substr($fieldsFile, 0, strrpos($fieldsFile, "/") +1);
@@ -74,34 +76,44 @@ class ControllerGenerator extends BaseGenerator
 			    $relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
 			    $relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
 
-			    if($relation->type == 'mt1'){
-					$manyToManyModelRepositories[] = str_replace('Relation', $relation->inputs[0],'use App\Repositories\RelationRepository;');
+			    if(($relation->type == 'mt1') || ($relation->type == 'pm1')){
+				    $manyToManyModelRepositories[] = str_replace('Relation', $relation->inputs[0],'use App\Repositories\RelationRepository;');
 				    $modelRepoAttributes[] = str_replace('relation', $cc_relation, 'private $relationRepository;');
 				    $varModelRepos[] = str_replace('Relation', $cc_relation, ', RelationRepository ') . str_replace('relation', $cc_relation, '$relationRepo');
 				    $constructModelRepos[] = str_replace('relation', $cc_relation, '$this->relationRepository = $relationRepo;');
-				    $getModelRepos[] = str_replace( 'relation', $cc_relation, '$'.$cc_relation. 's = $this->relationRepository->all();');
-				    $sendModelRepos[] = str_replace('relation', $cc_relation, "->with('relations', \$relations)");
+				    if(!$relation->type == 'pm1'){
+					    $getModelRepos[] = str_replace( 'relation', str_plural($cc_relation), '$relation = $this->relationRepository->all();');
+					    $sendModelRepos[] = str_replace('relation', str_plural($cc_relation), "->with('relation', \$relation)");
+				    }
+			    }
+
+			    if($relation->type == 'pm1'){
+				    $getPolymorph[] = str_replace( 'relation', $cc_relation, '$relation = $$MODEL_NAME_CAMEL$->'.str_plural($cc_relation).';');
+				    $sendPolymorph[] = str_replace('relation', $cc_relation, "->with('relation', \$relation)");
+				    $polymorphOne = '$$MORPH_ONE$ = $$MODEL_NAME_CAMEL$->$P_MORPH_ONE$()->create();';
+				    $polymorphOne = str_replace('$MORPH_ONE$', $cc_relation,$polymorphOne);
+				    $polymorphOne = str_replace('$P_MORPH_ONE$', str_plural($cc_relation),$polymorphOne);
 			    }
 
 			    foreach ($relatedFields as $field){
-			    	if(!empty($field->htmlValues[0])){
-			    		if(strstr($field->htmlValues[0], 'foreign')){
-			    			$foreignArray = explode(':', $field->htmlValues[0]);
+				    if(!empty($field->htmlValues[0])){
+					    $foreignArray = explode(':', $field->htmlValues[0]);
+					    if((strstr($field->htmlValues[0], 'foreign') && (!strstr($field->htmlValues[0], $this->commandData->dynamicVars["\$MODEL_NAME$"])))){
 						    $manyToManyModelRepositories[] = str_replace('Relation', $foreignArray[1],'use App\Repositories\RelationRepository;');
 						    $modelRepoAttributes[] = str_replace('relation', camel_case($foreignArray[1]), 'private $relationRepository;');
 						    $varModelRepos[] = str_replace('Relation', $foreignArray[1], ', RelationRepository ') . str_replace('relation', camel_case($foreignArray[1]), '$relationRepo');
 						    $constructModelRepos[] = str_replace('relation', camel_case($foreignArray[1]), '$this->relationRepository = $relationRepo;');
-						    $getModelRepos[] = str_replace( 'relation', camel_case($foreignArray[1]), '$'.camel_case($foreignArray[1]). 's = $this->relationRepository->all();');
-						    $sendModelRepos[] = str_replace('relation', camel_case($foreignArray[1]), "->with('relations', \$relations)");
 					    }
+					    $getModelRepos[] = str_replace( 'relation', camel_case($foreignArray[1]), '$'.camel_case($foreignArray[1]). 's = $this->relationRepository->all();');
+					    $sendModelRepos[] = str_replace('relation', camel_case($foreignArray[1]), "->with('relations', \$relations)");
 				    }
 			    }
 
 
 			    if(empty($relation->inputs[1])){
-				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->relations()->createMany(\$request->input('relation'));}");
+				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relation\') == null){'.'$'.$modelName."->".str_plural($cc_relation)."()->createMany(\$request->input('relation'));}");
 			    }else {
-				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\'relations\') == null){'.'$'.$modelName."->relations()->sync(\$request->input('relations'));}");
+				    $store_relations[] = str_replace('relation', $cc_relation, 'if(!$request->input(\''.str_plural($cc_relation).'\') == null){'.'$'.$modelName."->".str_plural($cc_relation)."()->sync(\$request->input('".str_plural($cc_relation)."'));}");
 			    }
 			    if(!empty($relation->inputs[1])){
 				    $manyToManyModelRepositories[] = str_replace('Relation', $relation->inputs[0],'use App\Repositories\RelationRepository;');
@@ -121,12 +133,17 @@ class ControllerGenerator extends BaseGenerator
 	    $templateData = str_replace('$CONSTRUCT_MODEL_REPOS$', implode("\n", $constructModelRepos), $templateData);
 	    $templateData = str_replace('$GET_MODEL_REPOS$', implode("\n", $getModelRepos), $templateData);
 	    $templateData = str_replace('$SEND_MODEL_REPOS$', implode('', $sendModelRepos), $templateData);
+	    $templateData = str_replace('$GET_POLYMORPHS$', implode("\n", $getPolymorph), $templateData);
+	    $templateData = str_replace('$SEND_POLYMORPHS$', implode('', $sendPolymorph), $templateData);
 	    $templateData = str_replace('$STORE_RELATIONS$', implode("\n\n", $store_relations), $templateData);
+	    $templateData = str_replace('$MORPH_ONE$', $polymorphOne, $templateData);
+
+	    $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
 
-        FileUtil::createFile($this->path, $this->fileName, $templateData);
+	    FileUtil::createFile($this->path, $this->fileName, $templateData);
 
-        $this->commandData->commandComment("\nController created: ");
+	    $this->commandData->commandComment("\nController created: ");
         $this->commandData->commandInfo($this->fileName);
     }
 

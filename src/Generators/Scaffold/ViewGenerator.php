@@ -49,7 +49,7 @@ class ViewGenerator extends BaseGenerator
                 $this->generateIndex();
             }
 
-            if (count(array_intersect(['create', 'update'], $viewsToBeGenerated)) > 0) {
+            if (count(array_intersect(['create', 'update','fields'], $viewsToBeGenerated)) > 0) {
                 $this->generateFields();
             }
 
@@ -65,6 +65,10 @@ class ViewGenerator extends BaseGenerator
                 $this->generateShowFields();
                 $this->generateShow();
             }
+
+	        if (in_array('show_fields', $viewsToBeGenerated)) {
+		        $this->generateShowFields();
+	        }
 
 	        if (in_array('relations', $viewsToBeGenerated)) {
 		        $this->generateShowFields();
@@ -326,6 +330,7 @@ class ViewGenerator extends BaseGenerator
         $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
         $templateData = str_replace('$FIELDS$', implode("\n\n", $this->htmlFields), $templateData);
+	    $templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
         FileUtil::createFile($this->path, 'fields.blade.php', $templateData);
         $this->commandData->commandInfo('field.blade.php created');
@@ -344,15 +349,22 @@ class ViewGenerator extends BaseGenerator
 
 	    foreach ($relationships as $relation)
 	    {
-	    	if(!$relation->inputs[0] == ''){
+	    	if((!$relation->inputs[0] == '') && ($relation->type != 'pm1') ){
+			    $relationName = snake_case($relation->inputs[0]);
 
-			    $relationName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation->inputs[0]));
-			    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_create')");
-
-			    if(empty($relation->inputs[1])){
-				    $relationNameJs = (string)strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relation->inputs[0]));
+			    if($relation->type == 'hmt'){
+				    $through = str_plural(snake_case($relation->inputs[1]));
+				    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$".$through.".relations_create')");
+				    $relationNameJs = kebab_case($relation->inputs[0]);
 				    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
-			    }
+			    } else {
+				    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_create')");
+
+				    if(empty($relation->inputs[1])){
+					    $relationNameJs = kebab_case($relation->inputs[0]);
+					    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
+				    }
+				}
 		    }
 	    }
 
@@ -360,6 +372,7 @@ class ViewGenerator extends BaseGenerator
 	    $templateData = str_replace('$RELATIONS$', implode("\n\n", $relationsView), $templateData);
 	    $templateData = str_replace('$JSRELATIONS$', implode("\n\n", $relationsViewJs), $templateData);
 	    $templateData = fill_template($this->commandData->dynamicVars, $templateData);
+	    $templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
         FileUtil::createFile($this->path, 'create.blade.php', $templateData);
         $this->commandData->commandInfo('create.blade.php created');
@@ -371,26 +384,40 @@ class ViewGenerator extends BaseGenerator
 
 	    $relationships = $this->commandData->relations;
 
-	    $relationsView = [];
+	    $oneToManyRelationsView = [];
+	    $manyToManyRelationsView = [];
 	    $relationsViewJs = [];
 
 	    foreach ($relationships as $relation)
 	    {
-	    	if(!$relation->inputs[0] == '')
+		    if((!$relation->inputs[0] == '') && ($relation->type != 'pm1'))
 		    {
-		    	$relationName = (string)strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $relation->inputs[0]));
-		    	$relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_edit')");
 
-			    if(empty($relation->inputs[1])){
-				    $relationNameJs = (string)strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relation->inputs[0]));
+			    $relationName = snake_case($relation->inputs[0]);
+			    $relationNameJs = kebab_case($relation->inputs[0]);
+
+			    if($relation->type == 'hmt'){
+				    $through = str_plural(snake_case($relation->inputs[1]));
+				    $oneToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$".$through.".relations_edit')");
 				    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
-			    }
+			    } else {
+				    if(empty($relation->inputs[1])){
+				    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
+
+				    $oneToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_edit')");
+			    } else {
+				    $manyToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_edit')");
+			    }}
+
+
 		    }
 	    }
 
-	    $templateData = str_replace('$RELATIONS$', implode("\n\n", $relationsView), $templateData);
+	    $templateData = str_replace('$1TM_RELATIONS$', implode("\n\n", $oneToManyRelationsView), $templateData);
+	    $templateData = str_replace('$MTM_RELATIONS$', implode("\n\n", $manyToManyRelationsView), $templateData);
 	    $templateData = str_replace('$JSRELATIONS$', implode("\n\n", $relationsViewJs), $templateData);
         $templateData = fill_template($this->commandData->dynamicVars, $templateData);
+	    $templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
         FileUtil::createFile($this->path, 'edit.blade.php', $templateData);
         $this->commandData->commandInfo('edit.blade.php created');
@@ -434,7 +461,7 @@ class ViewGenerator extends BaseGenerator
 
 		foreach ($relationships as $relation)
 		{
-			if(!$relation->inputs[0] == ''){
+			if((!$relation->inputs[0] == '') && ($relation->inputs[0] != 'pm1')){
 
 				$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
 				$relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
@@ -523,6 +550,8 @@ class ViewGenerator extends BaseGenerator
 				$fileString = $relationName . '_create.blade.php';
 				$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
 				$templateData = fill_template($this->commandData->dynamicVars, $templateData);
+				$templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
+
 
 				FileUtil::createFile($this->path, $fileName, $templateData);
 
@@ -543,7 +572,7 @@ class ViewGenerator extends BaseGenerator
 
 		foreach ($relationships as $relation)
 		{
-			if(!$relation->inputs[0] == ''){
+			if((!$relation->inputs[0] == '') && ($relation->inputs[0] != 'pm1')){
 
 				$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
 				$relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
@@ -581,12 +610,18 @@ class ViewGenerator extends BaseGenerator
 
 					$templateData = str_replace('$RELATION_COLUMN$', implode("\n\n", $viewFields), $templateData);
 
-					$templateData = str_replace('$SCFILEDIR$', snake_case($relationName), $templateData);
+
 
 					$templateData = str_replace('$CCRELATION$', camel_case($relationName), $templateData);
 
+					$templateData = str_replace('$RELATION_TITLE$', preg_replace('/(?<!\ )[A-Z]/', ' $0', $relationName), $templateData);
+
+					$templateData = str_replace('$RELATION_NAME$', $relationName, $templateData);
+
+					$templateData = str_replace('$PCCRELATION$', str_plural(camel_case($relationName)), $templateData);
+
 				} else {
-					$templateData = get_template('scaffold.views.relations_many_to_many_fields', $this->templateType);
+					$templateData = get_template('scaffold.views.relations_edit_many_to_many_fields', $this->templateType);
 
 					$pivotJson = rtrim(ucfirst(camel_case($relation->inputs[1])), 's') . '.json';
 
@@ -630,11 +665,14 @@ class ViewGenerator extends BaseGenerator
 					}
 
 					$templateData = str_replace('$CCRELATION$', $cc_relation, $templateData);
+					$templateData = str_replace('$PCCRELATION$', str_plural(camel_case($relationName)), $templateData);
 
 				}
-				$templateData = str_replace('$RELATION$', preg_replace('/(.*?[a-z]{1})([A-Z]{1}.*?)/', '${1} ${2}', $relationName), $templateData);
+
+				$templateData = str_replace('$SCFILEDIR$', str_plural(snake_case($relationName)), $templateData);
+				$templateData = str_replace('$RELATION$', preg_replace('/(?<!\ )[A-Z]/', ' $0', $relationName), $templateData);
 				$fileString = $relationName . '_edit.blade.php';
-				$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
+				$fileName = snake_case($fileString);
 				$templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
 				$templateData = fill_template($this->commandData->dynamicVars, $templateData);

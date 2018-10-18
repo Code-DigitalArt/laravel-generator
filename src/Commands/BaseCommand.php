@@ -106,17 +106,17 @@ class BaseCommand extends Command
     {
     	if($this->isGenerate()){
 
-		    if ($this->isGenerateOption('requests') and $this->isGenerateOption('api_requests')) {
+		    if ($this->isGenerateOption('api_requests')) {
 			    $requestGenerator = new APIRequestGenerator($this->commandData);
 			    $requestGenerator->generate();
 		    }
 
-		    if ($this->isGenerateOption('controllers') and $this->isGenerateOption('api_controller')) {
+		    if ($this->isGenerateOption('api_controller')) {
 			    $controllerGenerator = new APIControllerGenerator($this->commandData);
 			    $controllerGenerator->generate();
 		    }
 
-		    if ($this->isGenerateOption('routes') and $this->isGenerateOption('api_routes')) {
+		    if ($this->isGenerateOption('api_routes')) {
 			    $routesGenerator = new APIRoutesGenerator($this->commandData);
 			    $routesGenerator->generate();
 		    }
@@ -170,7 +170,7 @@ class BaseCommand extends Command
 			    $requestGenerator->generate();
 		    }
 
-		    if ($this->isGenerateOption('controllers') and $this->isGenerateOption('scaffold_controller')) {
+		    if ($this->isGenerateOption('scaffold_controller')) {
 			    $controllerGenerator = new ControllerGenerator($this->commandData);
 			    $controllerGenerator->generate();
 		    }
@@ -180,7 +180,7 @@ class BaseCommand extends Command
 			    $viewGenerator->generate();
 		    }
 
-		    if ($this->isGenerateOption('routes') and $this->isGenerateOption('scaffold_routes')) {
+		    if ($this->isGenerateOption('scaffold_routes')) {
 			    $routeGenerator = new RoutesGenerator($this->commandData);
 			    $routeGenerator->generate();
 		    }
@@ -254,7 +254,7 @@ class BaseCommand extends Command
 	public function isGenerateOption($option)
 	{
 		if ($this->commandData->getOption('generate')){
-			return in_array($option, (array) $this->commandData->getOption('generate'));
+			return in_array($option, explode(",", $this->commandData->getOption('generate')));
 		}
 
 		return false;

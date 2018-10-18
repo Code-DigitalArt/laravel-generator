@@ -90,7 +90,7 @@ class HTMLFieldGenerator
 				$fieldTemplate = get_template('scaffold.fields.select'.'_js', $templateType);
 				$radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
 				if(array_key_exists('foreign',$radioLabels)){
-					$fieldTemplate = get_template('scaffold.fields.select'.'_foreign', $templateType);
+					$fieldTemplate = get_template('scaffold.fields.select'.'_js', $templateType);
 					$fieldTemplate = str_replace('$FOREIGN$', camel_case($radioLabels['foreign']), $fieldTemplate);
 				} else {
 					$fieldTemplate = str_replace(
