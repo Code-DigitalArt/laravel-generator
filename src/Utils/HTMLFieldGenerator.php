@@ -2,6 +2,7 @@
 
 namespace InfyOm\Generator\Utils;
 
+use function GuzzleHttp\Psr7\str;
 use InfyOm\Generator\Common\GeneratorField;
 
 class HTMLFieldGenerator
@@ -65,6 +66,18 @@ class HTMLFieldGenerator
 	        	break;
         }
 
+        if(str_contains($field->migrationText, 'nullable')){
+	        $fieldTemplate = str_replace('$REQUIRED$', '', $fieldTemplate);
+        } else {
+	        if((str_contains($fieldTemplate, '[') && (str_contains($fieldTemplate, 'Form::')))){
+		        $fieldTemplate = str_replace('$REQUIRED$', ", 'required' => 'required' ", $fieldTemplate);
+	        } elseif ((str_contains($fieldTemplate, 'Form::') && (!str_contains($fieldTemplate, '[')))) {
+		        $fieldTemplate = str_replace('$REQUIRED$', " ['required' => 'required']", $fieldTemplate);
+	        } else {
+		        $fieldTemplate = str_replace('$REQUIRED$', ' required="required" ', $fieldTemplate);
+	        }
+        }
+
         return $fieldTemplate;
     }
 
@@ -125,6 +138,18 @@ class HTMLFieldGenerator
 				break;
 		}
 
+		if(str_contains($field->migrationText, 'nullable')){
+			$fieldTemplate = str_replace('$REQUIRED$', '', $fieldTemplate);
+		} else {
+			if((str_contains($fieldTemplate, '[') && (str_contains($fieldTemplate, 'Form::')))){
+				$fieldTemplate = str_replace('$REQUIRED$', ", 'required' => 'required' ", $fieldTemplate);
+			} elseif ((str_contains($fieldTemplate, 'Form::') && (!str_contains($fieldTemplate, '[')))) {
+				$fieldTemplate = str_replace('$REQUIRED$', " ['required' => 'required']", $fieldTemplate);
+			} else {
+				$fieldTemplate = str_replace('$REQUIRED$', ' required="required" ', $fieldTemplate);
+			}
+		}
+
 		return $fieldTemplate;
 	}
 
@@ -183,6 +208,18 @@ class HTMLFieldGenerator
 				}
 				$fieldTemplate = str_replace('$RADIO_BUTTONS$', implode("\n", $radioButtons), $fieldTemplate);
 				break;
+		}
+
+		if(str_contains($field->migrationText, 'nullable')){
+			$fieldTemplate = str_replace('$REQUIRED$', '', $fieldTemplate);
+		} else {
+			if((str_contains($fieldTemplate, '[') && (str_contains($fieldTemplate, 'Form::')))){
+				$fieldTemplate = str_replace('$REQUIRED$', ", 'required' => 'required' ", $fieldTemplate);
+			} elseif ((str_contains($fieldTemplate, 'Form::') && (!str_contains($fieldTemplate, '[')))) {
+				$fieldTemplate = str_replace('$REQUIRED$', " ['required' => 'required']", $fieldTemplate);
+			} else {
+				$fieldTemplate = str_replace('$REQUIRED$', ' required="required" ', $fieldTemplate);
+			}
 		}
 
 		return $fieldTemplate;
