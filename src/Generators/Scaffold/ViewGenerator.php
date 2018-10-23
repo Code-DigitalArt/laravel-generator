@@ -208,111 +208,6 @@ class ViewGenerator extends BaseGenerator
                 continue;
             }
 
-            //            switch ($field->htmlType) {
-            //                case 'text':
-            //                case 'textarea':
-            //                case 'date':
-            //                case 'file':
-            //                case 'email':
-            //                case 'password':
-            //                case 'number':
-            //                    $fieldTemplate = get_template('scaffold.fields.' . $field->htmlType, $this->templateType);
-            //                    break;
-            //
-            //                case 'select':
-            //                case 'enum':
-            //                    $fieldTemplate = get_template('scaffold.fields.select', $this->templateType);
-            //                    $inputsArr = explode(',', $field['htmlTypeInputs']);
-            //
-            //                    $fieldTemplate = str_replace(
-            //                        '$INPUT_ARR$',
-            //                        GeneratorFieldsInputUtil::prepareKeyValueArrayStr($inputsArr),
-            //                        $fieldTemplate
-            //                    );
-            //                    break;
-            //
-            //                case 'radio':
-            //                    $fieldTemplate = get_template('scaffold.fields.radio_group', $this->templateType);
-            //                    $radioTemplate = get_template('scaffold.fields.radio', $this->templateType);
-            //                    $inputsArr = explode(',', $field['htmlTypeInputs']);
-            //                    $radioButtons = [];
-            //                    foreach ($inputsArr as $item) {
-            //                        $radioButtonsTemplate = fill_field_template(
-            //                            $this->commandData->fieldNamesMapping,
-            //                            $radioTemplate, $field
-            //                        );
-            //                        $radioButtonsTemplate = str_replace('$VALUE$', $item, $radioButtonsTemplate);
-            //                        $radioButtons[] = $radioButtonsTemplate;
-            //                    }
-            //                    $fieldTemplate = str_replace('$RADIO_BUTTONS$', implode("\n", $radioButtons), $fieldTemplate);
-            //                    break;
-            //
-            ////                case 'checkbox-group':
-            ////                    $fieldTemplate = get_template('scaffold.fields.checkbox_group', $this->templateType);
-            ////                      $radioTemplate = get_template('scaffold.fields.checks', $this->templateType);
-            ////                      $inputsArr = explode(',', $field['htmlTypeInputs']);
-            ////                      $radioButtons = [];
-            ////                      foreach ($inputsArr as $item) {
-            ////                          $radioButtonsTemplate = fill_field_template(
-            ////                              $this->commandData->fieldNamesMapping,
-            ////                              $radioTemplate,
-            ////                              $field
-            ////                          );
-            ////                          $radioButtonsTemplate = str_replace('$VALUE$', $item, $radioButtonsTemplate);
-            ////                          $radioButtons[] = $radioButtonsTemplate;
-            ////                      }
-            ////                    $fieldTemplate = str_replace('$CHECKBOXES$', implode("\n", $radioButtons), $fieldTemplate);
-            ////                    break;
-            //
-            //                case 'bool-checkbox':
-            //                    $fieldTemplate = get_template('scaffold.fields.bool-checkbox', $this->templateType);
-            //                    $checkboxValue = $value = $field['htmlTypeInputs'];
-            //                    if ($field['fieldType'] === 'boolean') {
-            //                        if ($checkboxValue === 'checked') {
-            //                            $checkboxValue = '1, true';
-            //                        } elseif ($checkboxValue === 'unchecked') {
-            //                            $checkboxValue = '0';
-            //                        }
-            //                    }
-            //                    $fieldTemplate = str_replace('$CHECKBOX_VALUE$', $checkboxValue, $fieldTemplate);
-            //                    $fieldTemplate = str_replace('$VALUE$', $value, $fieldTemplate);
-            //                    break;
-            //
-            //                case 'toggle-switch':
-            //                    $fieldTemplate = get_template('scaffold.fields.toggle-switch', $this->templateType);
-            //                    $checkboxValue = $value = $field['htmlTypeInputs'];
-            //                    if ($field['fieldType'] === 'boolean') {
-            //                        $checkboxValue = "[ 'On' => '1' , 'Off' => '0']";
-            //                    }
-            //                    $fieldTemplate = str_replace('$CHECKBOX_VALUE$', $checkboxValue, $fieldTemplate);
-            //                    //$fieldTemplate = str_replace('$VALUE$', $value, $fieldTemplate);
-            //                    break;
-            //
-            //                case 'checkbox':
-            //                    $fieldTemplate = get_template('scaffold.fields.checkbox', $this->templateType);
-            //                    $checkboxValue = $value = $field['htmlTypeInputs'];
-            //                    if ($field['fieldType'] != 'boolean') {
-            //                        $checkboxValue = "'" . $value . "'";
-            //                    }
-            //                    $fieldTemplate = str_replace('$CHECKBOX_VALUE$', $checkboxValue, $fieldTemplate);
-            //                    $fieldTemplate = str_replace('$VALUE$', $value, $fieldTemplate);
-            //                    break;
-            //
-            //                case 'boolean':
-            //                    $fieldTemplate = get_template('scaffold.fields.boolean', $this->templateType);
-            //                    $checkboxValue = $value = $field['htmlTypeInputs'];
-            //                    if ($field['fieldType'] == 'boolean') {
-            //                        $checkboxValue = true;
-            //                    }
-            //                    $fieldTemplate = str_replace('$CHECKBOX_VALUE$', $checkboxValue, $fieldTemplate);
-            //                    // $fieldTemplate = str_replace('$VALUE$', $value, $fieldTemplate);
-            //                    break;
-            //
-            //                default:
-            //                    $fieldTemplate = '';
-            //                    break;
-            //            }
-
             $fieldTemplate = HTMLFieldGenerator::generateHTML($field, $this->templateType);
 
             if (!empty($fieldTemplate)) {
@@ -338,36 +233,47 @@ class ViewGenerator extends BaseGenerator
 
     private function generateCreate()
     {
-        $templateData = get_template('scaffold.views.create', $this->templateType);
+        $templateData    = get_template('scaffold.views.create', $this->templateType);
 
+	    $relationships   = $this->commandData->relations;
 
-
-	    $relationships = $this->commandData->relations;
-
-	    $relationsView = [];
+	    $relationsView   = [];
 	    $relationsViewJs = [];
 
 	    foreach ($relationships as $relation)
 	    {
-	    	if((!$relation->inputs[0] == '') && ($relation->type != 'pm1') ){
-			    $relationName = snake_case($relation->inputs[0]);
+		    if(!$relation->inputs[0] == ''){
 
-			    if($relation->type == 'hmt'){
-				    $through = str_plural(snake_case($relation->inputs[1]));
-				    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$".$through.".relations_create')");
-				    $relationNameJs = kebab_case($relation->inputs[0]);
-				    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
-			    } else {
-				    $relationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_create')");
+			    $relationType       = $relation->type;
+			    $relationName       = snake_case($relation->inputs[0]);
+			    $relationNameJs     = kebab_case($relation->inputs[0]);
 
-				    if(empty($relation->inputs[1])){
-					    $relationNameJs = kebab_case($relation->inputs[0]);
+			    switch ($relationType){
+				    case '1t1':
+					    break;
+				    case '1tm':
+					    $relationsView[]   = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_create')");
 					    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
-				    }
-				}
+					    break;
+				    case 'mt1':
+					    break;
+				    case 'mtm':
+					    break;
+				    case 'hmt':
+					    $through           = str_plural(snake_case($relation->inputs[1]));
+					    $relationsView[]   = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$".$through.".relations_create')");
+					    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
+					    break;
+				    case 'pm1':
+					    break;
+				    case 'pmm':
+					    break;
+				    default:
+					    break;
+
+			    }
 		    }
 	    }
-
 
 	    $templateData = str_replace('$RELATIONS$', implode("\n\n", $relationsView), $templateData);
 	    $templateData = str_replace('$JSRELATIONS$', implode("\n\n", $relationsViewJs), $templateData);
@@ -386,37 +292,42 @@ class ViewGenerator extends BaseGenerator
 
 	    $oneToManyRelationsView = [];
 	    $manyToManyRelationsView = [];
-	    $relationsViewJs = [];
 
 	    foreach ($relationships as $relation)
 	    {
-		    if((!$relation->inputs[0] == '') && ($relation->type != 'pm1'))
+		    if((!$relation->inputs[0] == ''))
 		    {
+			    $relationType       = $relation->type;
+			    $relationName       = snake_case($relation->inputs[0]);
 
-			    $relationName = snake_case($relation->inputs[0]);
-			    $relationNameJs = kebab_case($relation->inputs[0]);
-
-			    if($relation->type == 'hmt'){
-				    $through = str_plural(snake_case($relation->inputs[1]));
-				    $oneToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$".$through.".relations_edit')");
-				    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
-			    } else {
-				    if(empty($relation->inputs[1])){
-				    $relationsViewJs[] = str_replace('relation', $relationNameJs, "@yield('javascript-relation')");
-
-				    $oneToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_edit')");
-			    } else {
-				    $manyToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_edit')");
-			    }}
-
-
+			    switch ($relationType){
+				    case '1t1':
+					    break;
+				    case '1tm':
+					    $oneToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations_edit')");
+					    break;
+				    case 'mt1':
+					    break;
+				    case 'mtm':
+					    $manyToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
+					    break;
+				    case 'hmt':
+					    $through = str_plural(snake_case($relation->inputs[1]));
+					    $oneToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$".$through.".relations_edit')");
+					    break;
+				    case 'pm1':
+					    break;
+				    case 'pmm':
+					    break;
+				    default:
+					    break;
+			    }
 		    }
 	    }
 
 	    $templateData = str_replace('$1TM_RELATIONS$', implode("\n\n", $oneToManyRelationsView), $templateData);
 	    $templateData = str_replace('$MTM_RELATIONS$', implode("\n\n", $manyToManyRelationsView), $templateData);
-	    $templateData = str_replace('$JSRELATIONS$', implode("\n\n", $relationsViewJs), $templateData);
-        $templateData = fill_template($this->commandData->dynamicVars, $templateData);
+	    $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 	    $templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
         FileUtil::createFile($this->path, 'edit.blade.php', $templateData);
@@ -454,109 +365,121 @@ class ViewGenerator extends BaseGenerator
 
 	private function generateCreateRelations()
 	{
-		$relationships = $this->commandData->relations;
-
-		$fieldsFile = $this->commandData->config->options["fieldsFile"];
-		$fieldsFileLocation = substr($fieldsFile, 0, strrpos($fieldsFile, "/") +1);
+		list($relationships, $fieldsFileLocation) = $this->getFieldsFile();
 
 		foreach ($relationships as $relation)
 		{
-			if((!$relation->inputs[0] == '') && ($relation->inputs[0] != 'pm1')){
+			if(!$relation->inputs[0] == '')
+			{
 
-				$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
-				$relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
+				$relationfieldsFile  = $fieldsFileLocation . $relation->inputs[0] . '.json';
+				$relationFields      = $this->getDataFromFieldsFile($relationfieldsFile);
+
+				$relationName       = $relation->inputs[0];
+				$ccRelationName     = camel_case($relationName);
+				$pluralRelationName = str_plural($ccRelationName);
+				$titleRelationName  = preg_replace('/(?<!\ )[A-Z]/', ' $0', $relationName);
+				$relationType       = $relation->type;
+				$filePrefix         = snake_case($relationName);
+				$kebabRelationName  = kebab_case($relationName);
+
+				$templateData = '';
+
 				$htmlFields         = [];
-				$relationName = (string) $relation->inputs[0];
 
+				switch ($relationType) {
+					case '1t1':
+						break;
+					case '1tm':
+						$templateData = get_template('scaffold.views.relations_one_to_many_fields', $this->templateType);
 
-				if(empty($relation->inputs[1]))
-				{
-					$templateData = get_template('scaffold.views.relations_one_to_many_fields', $this->templateType);
-
-					foreach ($relatedFields as $relatedField)
-					{
-						if (!$relatedField->inForm)
+						foreach ($relationFields as $relatedField)
 						{
-							continue;
+							if ($relatedField->inForm)
+							{
+								$fieldTemplate = HTMLFieldGenerator::generateJavascript($relatedField, $this->templateType);
+
+								if (!empty($fieldTemplate))
+								{
+									$fieldTemplate = fill_template_with_field_data(
+										$this->commandData->dynamicVars,
+										$this->commandData->fieldNamesMapping,
+										$fieldTemplate,
+										$relatedField
+									);
+									$htmlFields[]  = $fieldTemplate;
+								}
+							}
 						}
 
-						$fieldTemplate = HTMLFieldGenerator::generateJavascript($relatedField, $this->templateType);
+						$templateData = str_replace('$RELATIONJS$', $kebabRelationName, $templateData);
+						$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
+						$fileSuffix = '_create.blade.php';
+						break;
+					case 'mt1':
+						break;
+					case 'mtm':
+						$templateData = get_template('scaffold.views.relations_many_to_many_fields', $this->templateType);
 
-						if (!empty($fieldTemplate))
-						{
-							$fieldTemplate = fill_template_with_field_data(
-								$this->commandData->dynamicVars,
-								$this->commandData->fieldNamesMapping,
-								$fieldTemplate,
-								$relatedField
-							);
-							$htmlFields[]  = $fieldTemplate;
-						}
+						$pivotTable = $relation->inputs[1];
+						$pivotModel = rtrim(ucfirst(camel_case($pivotTable)), 's');
+						$pivotJson  = $pivotModel . '.json';
 
-					}
-
-					$templateData = str_replace('$RELATIONJS$', strtolower(preg_replace('%([a-z])([A-Z])%', '\1-\2', $relationName)), $templateData);
-					$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
-					$templateData = str_replace('$FIELD_ARRAY_NAME$', camel_case($relationName), $templateData);
-
-				} else {
-					$templateData = get_template('scaffold.views.relations_many_to_many_fields', $this->templateType);
-
-					$pivotJson = rtrim(ucfirst(camel_case($relation->inputs[1])), 's') . '.json';
-
-					$pivotFields = $this->getDataFromFieldsFile($fieldsFileLocation . $pivotJson);
-
-					$numberOfPivots = 0;
-					$cc_relation = camel_case($relationName);
-					$htmlFields = [];
-
-					foreach ($pivotFields as $pivotField)
-					{
-						if ($pivotField->inForm) {
-							$numberOfPivots++;
-						}
-					}
-
-					if($numberOfPivots > 0){
+						$pivotFields = $this->getDataFromFieldsFile($fieldsFileLocation . $pivotJson);
 
 						foreach ($pivotFields as $pivotField)
 						{
-							if(!$pivotField->inForm){
-								continue;
-							}
-							$fieldTemplate = HTMLFieldGenerator::generateHTML($pivotField, $this->templateType);
+							if ($pivotField->inForm) {
 
-							if (!empty($fieldTemplate))
-							{
-								$fieldTemplate = fill_template_with_field_data(
-									$this->commandData->dynamicVars,
-									$this->commandData->fieldNamesMapping,
-									$fieldTemplate,
-									$pivotField
-								);
-								$htmlFields[]  = $fieldTemplate;
+								$fieldTemplate = HTMLFieldGenerator::generateHTML($pivotField, $this->templateType);
+
+								if (!empty($fieldTemplate))
+								{
+									$fieldTemplate = fill_template_with_field_data(
+										$this->commandData->dynamicVars,
+										$this->commandData->fieldNamesMapping,
+										$fieldTemplate,
+										$pivotField
+									);
+									$htmlFields[]  = $fieldTemplate;
+								}
+
+								$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
 							}
+
 						}
-						$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
-						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="'.$cc_relation.'s[ {{$'.$cc_relation.'->name}}]"{{$'.$cc_relation.'->name}}></div>', $templateData);
-					} else {
-						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="$'.$cc_relation.'[ {{$'.$cc_relation.'->name}}]"></div>', $templateData);
-					}
+						$templateData = str_replace(
+							'$CHECKBOX$',
+							'<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $ccRelationName . '->id}}" name="$'.$ccRelationName.'[ {{$'.$ccRelationName.'->name}}]"></div>',
+							$templateData);
+						$templateData = str_replace('$PCCRELATION$', $pluralRelationName, $templateData);
+						$templateData = str_replace('$CCRELATION$', $ccRelationName, $templateData);
 
-					$templateData = str_replace('$CCRELATION$', $cc_relation, $templateData);
-
+						$fileSuffix = '.blade.php';
+						break;
+					case 'hmt':
+						break;
+					case 'pm1':
+						break;
+					case 'pmm':
+						break;
+					default:
+						break;
 				}
-				$templateData = str_replace('$RELATION$', preg_replace('/(.*?[a-z]{1})([A-Z]{1}.*?)/', '${1} ${2}', $relationName), $templateData);
-				$fileString = $relationName . '_create.blade.php';
-				$fileName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $fileString));
-				$templateData = fill_template($this->commandData->dynamicVars, $templateData);
-				$templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
+				if ($templateData != '') {
+					$templateData = str_replace('$RELATION_TITLE$', $titleRelationName, $templateData);
+					$templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
-				FileUtil::createFile($this->path, $fileName, $templateData);
+					$fileName = $filePrefix . $fileSuffix;
 
+					$templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
-				$this->commandData->commandInfo($fileName);
+					FileUtil::createFile($this->path, $fileName, $templateData);
+
+					$this->commandData->commandInfo($fileName);
+				}
+
 			}
 		}
 
@@ -565,138 +488,71 @@ class ViewGenerator extends BaseGenerator
 
 	private function generateEditRelations()
 	{
-		$relationships = $this->commandData->relations;
-
-		$fieldsFile = $this->commandData->config->options["fieldsFile"];
-		$fieldsFileLocation = substr($fieldsFile, 0, strrpos($fieldsFile, "/") +1);
+		list($relationships, $fieldsFileLocation) = $this->getFieldsFile();
 
 		foreach ($relationships as $relation)
 		{
-			if((!$relation->inputs[0] == '') && ($relation->inputs[0] != 'pm1')){
+			if ($relation->inputs[0] != '')
+			{
 
-				$relationfieldsFile = $fieldsFileLocation . $relation->inputs[0] . '.json';
-				$relatedFields      = $this->getDataFromFieldsFile($relationfieldsFile);
-				$viewFields         = [];
-				$relationName = (string) $relation->inputs[0];
+				$relationName       = $relation->inputs[0];
+				$ccRelationName     = camel_case($relationName);
+				$pluralRelationName = str_plural($ccRelationName);
+				$titleRelationName  = preg_replace('/(?<!\ )[A-Z]/', ' $0', $relationName);
+				$relationType       = $relation->type;
+				$filePrefix         = snake_case($relationName);
+				$relationFieldsFileDir    = str_plural($filePrefix);
 
+				$templateData = '';
 
-				if(empty($relation->inputs[1]))
-				{
+				switch ($relationType) {
+					case '1t1':
+						break;
+					case '1tm':
+						$templateData = get_template('scaffold.views.relations_edit_one_to_many', $this->templateType);
+						$templateData = str_replace('$SCFILEDIR$', $relationFieldsFileDir, $templateData);
+						$fileSuffix = '_edit.blade.php';
+						break;
+					case 'mt1':
+						break;
+					case 'mtm':
+						break;
+					case 'hmt':
+						break;
+					case 'pm1':
+						break;
+					case 'pmm':
+						break;
+					default:
+						break;
+				}
 
-					foreach ($relatedFields as $relatedField)
-					{
-						if (!$relatedField->inForm)
-						{
-							continue;
-						}
-						$viewField     = '<div class="form-group col-sm-6">{{ $$RELATION$->$COLUMN$ }}</div>';
-						$viewField     = str_replace('$RELATION$', camel_case($relationName), $viewField);
-						$viewField     = str_replace('$COLUMN$', $relatedField->name, $viewField);
-						$viewFields[]  = $viewField;
-						$fieldTemplate = HTMLFieldGenerator::generateEditJavascript($relatedField, $this->templateType);
-						if (!empty($fieldTemplate))
-						{
-							$fieldTemplate = fill_template_with_field_data(
-								$this->commandData->dynamicVars,
-								$this->commandData->fieldNamesMapping,
-								$fieldTemplate,
-								$relatedField
-							);
-							$htmlFields[]  = $fieldTemplate;
-						}
-					}
+				if($templateData != ''){
 
-					$templateData = get_template('scaffold.views.relations_edit_one_to_many', $this->templateType);
-
-					$templateData = str_replace('$RELATION_COLUMN$', implode("\n\n", $viewFields), $templateData);
-
-
-
-					$templateData = str_replace('$CCRELATION$', camel_case($relationName), $templateData);
-
-					$templateData = str_replace('$RELATION_TITLE$', preg_replace('/(?<!\ )[A-Z]/', ' $0', $relationName), $templateData);
-
+					$templateData = str_replace('$RELATION_TITLE$', $titleRelationName, $templateData);
+					$templateData = str_replace('$PCCRELATION$', $pluralRelationName, $templateData);
+					$templateData = str_replace('$CCRELATION$', $ccRelationName, $templateData);
 					$templateData = str_replace('$RELATION_NAME$', $relationName, $templateData);
+					$templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
-					$templateData = str_replace('$PCCRELATION$', str_plural(camel_case($relationName)), $templateData);
+					$fileName = $filePrefix. $fileSuffix;
 
-				} else {
-					$templateData = get_template('scaffold.views.relations_edit_many_to_many_fields', $this->templateType);
+					$templateData = fill_template($this->commandData->dynamicVars, $templateData);
 
-					$pivotJson = rtrim(ucfirst(camel_case($relation->inputs[1])), 's') . '.json';
+					FileUtil::createFile($this->path, $fileName, $templateData);
 
-					$pivotFields = $this->getDataFromFieldsFile($fieldsFileLocation . $pivotJson);
-
-					$numberOfPivots = 0;
-					$cc_relation = camel_case($relationName);
-					$htmlFields = [];
-
-					foreach ($pivotFields as $pivotField)
-					{
-						if ($pivotField->inForm) {
-							$numberOfPivots++;
-						}
-					}
-
-					if($numberOfPivots > 0){
-
-						foreach ($pivotFields as $pivotField)
-						{
-							if(!$pivotField->inForm){
-								continue;
-							}
-							$fieldTemplate = HTMLFieldGenerator::generateHTML($pivotField, $this->templateType);
-
-							if (!empty($fieldTemplate))
-							{
-								$fieldTemplate = fill_template_with_field_data(
-									$this->commandData->dynamicVars,
-									$this->commandData->fieldNamesMapping,
-									$fieldTemplate,
-									$pivotField
-								);
-								$htmlFields[]  = $fieldTemplate;
-							}
-						}
-						$templateData = str_replace('$FIELDS$', implode("\n\n", $htmlFields), $templateData);
-						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="'.$cc_relation.'s[ {{$'.$cc_relation.'->name}}]"{{$'.$cc_relation.'->name}}></div>', $templateData);
-					} else {
-						$templateData = str_replace('$CHECKBOXES$', '<div class="form-group col-sm-1"><input type="checkbox" value="{{$'. $cc_relation . '->id}}" name="$'.$cc_relation.'[ {{$'.$cc_relation.'->name}}]"></div>', $templateData);
-					}
-
-					$templateData = str_replace('$CCRELATION$', $cc_relation, $templateData);
-					$templateData = str_replace('$PCCRELATION$', str_plural(camel_case($relationName)), $templateData);
+					$this->commandData->commandInfo($fileName);
 
 				}
 
-				$templateData = str_replace('$SCFILEDIR$', str_plural(snake_case($relationName)), $templateData);
-				$templateData = str_replace('$RELATION$', preg_replace('/(?<!\ )[A-Z]/', ' $0', $relationName), $templateData);
-				$fileString = $relationName . '_edit.blade.php';
-				$fileName = snake_case($fileString);
-				$templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
-
-				$templateData = fill_template($this->commandData->dynamicVars, $templateData);
-
-				FileUtil::createFile($this->path, $fileName, $templateData);
-
-
-				$this->commandData->commandInfo($fileName);
 			}
+
 		}
 
-		// Select Template File
 
-
-		/**
-		 *
-		 * For each edit display column information add to array
-		 *
-		*/
-
-		// Add edit and delete button routes
-		// Create File
 
     }
+
 
 
 
@@ -722,4 +578,17 @@ class ViewGenerator extends BaseGenerator
             }
         }
     }
+
+	/**
+	 * @return array
+	 */
+	private function getFieldsFile()
+	{
+		$relationships = $this->commandData->relations;
+
+		$fieldsFile         = $this->commandData->config->options["fieldsFile"];
+		$fieldsFileLocation = substr($fieldsFile, 0, strrpos($fieldsFile, "/") + 1);
+
+		return array($relationships, $fieldsFileLocation);
+	}
 }

@@ -72,7 +72,7 @@ class HTMLFieldGenerator
 	        if((str_contains($fieldTemplate, '[') && (str_contains($fieldTemplate, 'Form::')))){
 		        $fieldTemplate = str_replace('$REQUIRED$', ", 'required' => 'required' ", $fieldTemplate);
 	        } elseif ((str_contains($fieldTemplate, 'Form::') && (!str_contains($fieldTemplate, '[')))) {
-		        $fieldTemplate = str_replace('$REQUIRED$', " ['required' => 'required']", $fieldTemplate);
+		        $fieldTemplate = str_replace('$REQUIRED$', ", ['required' => 'required']", $fieldTemplate);
 	        } else {
 		        $fieldTemplate = str_replace('$REQUIRED$', ' required="required" ', $fieldTemplate);
 	        }

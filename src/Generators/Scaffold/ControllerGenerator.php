@@ -81,8 +81,8 @@ class ControllerGenerator extends BaseGenerator
 				    $modelRepoAttributes[] = str_replace('relation', $cc_relation, 'private $relationRepository;');
 				    $varModelRepos[] = str_replace('Relation', $cc_relation, ', RelationRepository ') . str_replace('relation', $cc_relation, '$relationRepo');
 				    $constructModelRepos[] = str_replace('relation', $cc_relation, '$this->relationRepository = $relationRepo;');
-				    if(!$relation->type == 'pm1'){
-					    $getModelRepos[] = str_replace( 'relation', str_plural($cc_relation), '$relation = $this->relationRepository->all();');
+				    if($relation->type != 'pm1'){
+					    $getModelRepos[] = str_replace( 'relation', str_plural($cc_relation), '$relation = $this->'.$cc_relation.'Repository->all();');
 					    $sendModelRepos[] = str_replace('relation', str_plural($cc_relation), "->with('relation', \$relation)");
 				    }
 			    }
@@ -96,16 +96,19 @@ class ControllerGenerator extends BaseGenerator
 			    }
 
 			    foreach ($relatedFields as $field){
-				    if(!empty($field->htmlValues[0])){
+				    if((!empty($field->htmlValues[0]) && ($field->htmlType == 'foreign'))){
+
 					    $foreignArray = explode(':', $field->htmlValues[0]);
+
+					    $getModelRepos[] = str_replace( 'relation', camel_case($foreignArray[1]), '$'.str_plural(camel_case($foreignArray[1])). ' = $this->relationRepository->all();');
+					    $sendModelRepos[] = str_replace('relation', camel_case($foreignArray[1]), "->with('relations', \$relations)");
+
 					    if((strstr($field->htmlValues[0], 'foreign') && (!strstr($field->htmlValues[0], $this->commandData->dynamicVars["\$MODEL_NAME$"])))){
 						    $manyToManyModelRepositories[] = str_replace('Relation', $foreignArray[1],'use App\Repositories\RelationRepository;');
 						    $modelRepoAttributes[] = str_replace('relation', camel_case($foreignArray[1]), 'private $relationRepository;');
 						    $varModelRepos[] = str_replace('Relation', $foreignArray[1], ', RelationRepository ') . str_replace('relation', camel_case($foreignArray[1]), '$relationRepo');
 						    $constructModelRepos[] = str_replace('relation', camel_case($foreignArray[1]), '$this->relationRepository = $relationRepo;');
 					    }
-					    $getModelRepos[] = str_replace( 'relation', camel_case($foreignArray[1]), '$'.camel_case($foreignArray[1]). 's = $this->relationRepository->all();');
-					    $sendModelRepos[] = str_replace('relation', camel_case($foreignArray[1]), "->with('relations', \$relations)");
 				    }
 			    }
 
