@@ -71,8 +71,8 @@ class ViewGenerator extends BaseGenerator
 	        }
 
 	        if (in_array('relations', $viewsToBeGenerated)) {
-		        $this->generateShowFields();
-		        $this->generateShow();
+		        $this->generateCreateRelations();
+		        $this->generateEditRelations();
 	        }
         } else {
             $this->generateTable();
@@ -378,7 +378,7 @@ class ViewGenerator extends BaseGenerator
 				$relationName       = $relation->inputs[0];
 				$ccRelationName     = camel_case($relationName);
 				$pluralRelationName = str_plural($ccRelationName);
-				$titleRelationName  = preg_replace('/(?<!\ )[A-Z]/', ' $0', $relationName);
+				$titleRelationName  = str_plural(preg_replace('/(?<!\ )[A-Z]/', ' $0', $relationName));
 				$relationType       = $relation->type;
 				$filePrefix         = snake_case($relationName);
 				$kebabRelationName  = kebab_case($relationName);
