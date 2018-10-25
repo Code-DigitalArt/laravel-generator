@@ -235,16 +235,30 @@ class ViewGenerator extends BaseGenerator
     {
         $templateData    = get_template('scaffold.views.create', $this->templateType);
 
-	    $relationships   = $this->commandData->relations;
+	    list($relationships, $fieldsFileLocation) = $this->getFieldsFile();
+
+	    $hasFileUpload   = '';
+
+	    $fields = $this->commandData->fields;
 
 	    $relationsView   = [];
 	    $relationsViewJs = [];
+
+	    foreach ($fields as $field)
+	    {
+		    if($field->htmlType == 'file')
+		    {
+		    	$hasFileUpload = ", 'files' => true";
+		    }
+		}
 
 	    foreach ($relationships as $relation)
 	    {
 		    if(!$relation->inputs[0] == ''){
 
 			    $relationType       = $relation->type;
+			    $relationfieldsFile  = $fieldsFileLocation . $relation->inputs[0] . '.json';
+			    $relationFields      = $this->getDataFromFieldsFile($relationfieldsFile);
 			    $relationName       = snake_case($relation->inputs[0]);
 			    $relationNameJs     = kebab_case($relation->inputs[0]);
 
@@ -272,11 +286,20 @@ class ViewGenerator extends BaseGenerator
 					    break;
 
 			    }
+
+			    foreach ($relationFields as $relationField)
+			    {
+				    if($relationField->htmlType == 'file')
+				    {
+					    $hasFileUpload = ", 'files' => true";
+				    }
+			    }
 		    }
 	    }
 
 	    $templateData = str_replace('$RELATIONS$', implode("\n\n", $relationsView), $templateData);
 	    $templateData = str_replace('$JSRELATIONS$', implode("\n\n", $relationsViewJs), $templateData);
+	    $templateData = str_replace('$FILE$', $hasFileUpload, $templateData);
 	    $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 	    $templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
@@ -289,9 +312,19 @@ class ViewGenerator extends BaseGenerator
         $templateData = get_template('scaffold.views.edit', $this->templateType);
 
 	    $relationships = $this->commandData->relations;
+	    $fields = $this->commandData->fields;
+	    $hasFileUpload = "";
 
 	    $oneToManyRelationsView = [];
 	    $manyToManyRelationsView = [];
+
+	    foreach ($fields as $field)
+	    {
+		    if($field->htmlType == 'file')
+		    {
+			    $hasFileUpload = ", 'files' => true";
+		    }
+	    }
 
 	    foreach ($relationships as $relation)
 	    {
@@ -327,6 +360,7 @@ class ViewGenerator extends BaseGenerator
 
 	    $templateData = str_replace('$1TM_RELATIONS$', implode("\n\n", $oneToManyRelationsView), $templateData);
 	    $templateData = str_replace('$MTM_RELATIONS$', implode("\n\n", $manyToManyRelationsView), $templateData);
+	    $templateData = str_replace('$FILE$', $hasFileUpload, $templateData);
 	    $templateData = fill_template($this->commandData->dynamicVars, $templateData);
 	    $templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
@@ -372,10 +406,11 @@ class ViewGenerator extends BaseGenerator
 			if(!$relation->inputs[0] == '')
 			{
 
-				$relationfieldsFile  = $fieldsFileLocation . $relation->inputs[0] . '.json';
+				$relationName       = $relation->inputs[0];
+
+				$relationfieldsFile  = $fieldsFileLocation . $relationName . '.json';
 				$relationFields      = $this->getDataFromFieldsFile($relationfieldsFile);
 
-				$relationName       = $relation->inputs[0];
 				$ccRelationName     = camel_case($relationName);
 				$pluralRelationName = str_plural($ccRelationName);
 				$titleRelationName  = str_plural(preg_replace('/(?<!\ )[A-Z]/', ' $0', $relationName));
@@ -469,6 +504,7 @@ class ViewGenerator extends BaseGenerator
 
 				if ($templateData != '') {
 					$templateData = str_replace('$RELATION_TITLE$', $titleRelationName, $templateData);
+					$templateData = str_replace('$RELATION_NAME$', $relationName, $templateData);
 					$templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
 					$fileName = $filePrefix . $fileSuffix;
@@ -490,6 +526,8 @@ class ViewGenerator extends BaseGenerator
 	{
 		list($relationships, $fieldsFileLocation) = $this->getFieldsFile();
 
+		$hasFileUpload = "";
+
 		foreach ($relationships as $relation)
 		{
 			if ($relation->inputs[0] != '')
@@ -502,6 +540,9 @@ class ViewGenerator extends BaseGenerator
 				$relationType       = $relation->type;
 				$filePrefix         = snake_case($relationName);
 				$relationFieldsFileDir    = str_plural($filePrefix);
+
+				$relationfieldsFile  = $fieldsFileLocation . $relationName . '.json';
+				$relationFields      = $this->getDataFromFieldsFile($relationfieldsFile);
 
 				$templateData = '';
 
@@ -527,12 +568,23 @@ class ViewGenerator extends BaseGenerator
 						break;
 				}
 
+				foreach ($relationFields as $relationField)
+				{
+					if($relationField->htmlType == 'file')
+					{
+						$hasFileUpload = ", 'files' => true";
+					}
+				}
+
+
+
 				if($templateData != ''){
 
 					$templateData = str_replace('$RELATION_TITLE$', $titleRelationName, $templateData);
 					$templateData = str_replace('$PCCRELATION$', $pluralRelationName, $templateData);
 					$templateData = str_replace('$CCRELATION$', $ccRelationName, $templateData);
 					$templateData = str_replace('$RELATION_NAME$', $relationName, $templateData);
+					$templateData = str_replace('$FILE$', $hasFileUpload, $templateData);
 					$templateData = str_replace('$THIS$', camel_case($this->commandData->modelName), $templateData);
 
 					$fileName = $filePrefix. $fileSuffix;
