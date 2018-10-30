@@ -29,6 +29,7 @@ class HTMLFieldGenerator
                 $radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
 		        if(array_key_exists('foreign',$radioLabels)){
 			        $fieldTemplate = get_template('scaffold.fields.select_foreign', $templateType);
+			        $fieldTemplate = str_replace('$P_FOREIGN$', str_plural(camel_case($radioLabels['foreign'])), $fieldTemplate);
 			        $fieldTemplate = str_replace('$FOREIGN$', camel_case($radioLabels['foreign']), $fieldTemplate);
 			        break;
 		        }
@@ -104,6 +105,7 @@ class HTMLFieldGenerator
 				$radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
 				if(array_key_exists('foreign',$radioLabels)){
 					$fieldTemplate = get_template('scaffold.fields.select'.'_js', $templateType);
+					$fieldTemplate = str_replace('$P_FOREIGN$', str_plural(camel_case($radioLabels['foreign'])), $fieldTemplate);
 					$fieldTemplate = str_replace('$FOREIGN$', camel_case($radioLabels['foreign']), $fieldTemplate);
 				} else {
 					$fieldTemplate = str_replace(
@@ -176,6 +178,7 @@ class HTMLFieldGenerator
 				$radioLabels = GeneratorFieldsInputUtil::prepareKeyValueArrFromLabelValueStr($field->htmlValues);
 				if(array_key_exists('foreign',$radioLabels)){
 					$fieldTemplate = get_template('scaffold.fields.select'.'_foreign_edit', $templateType);
+					$fieldTemplate = str_replace('$P_FOREIGN$', str_plural(camel_case($radioLabels['foreign'])), $fieldTemplate);
 					$fieldTemplate = str_replace('$FOREIGN$', camel_case($radioLabels['foreign']), $fieldTemplate);
 				} else {
 					$fieldTemplate = str_replace(

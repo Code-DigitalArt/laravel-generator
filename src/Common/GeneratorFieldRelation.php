@@ -49,7 +49,7 @@ class GeneratorFieldRelation
                 $relationClass = 'HasManyThrough';
                 break;
 	        case 'pm1':
-		        $functionName = camel_case(str_plural($modelName));
+		        $functionName = camel_case($modelName);
 		        $relation = 'morphOne';
 		        $relationClass = 'MorphOne';
 		        break;

@@ -272,6 +272,7 @@ class ViewGenerator extends BaseGenerator
 				    case 'mt1':
 					    break;
 				    case 'mtm':
+					    $manyToManyRelationsView[] = str_replace('relations',$relationName,"@include('\$VIEW_PREFIX\$\$MODEL_NAME_PLURAL_SNAKE\$.relations')");
 					    break;
 				    case 'hmt':
 					    $through           = str_plural(snake_case($relation->inputs[1]));
@@ -298,6 +299,7 @@ class ViewGenerator extends BaseGenerator
 	    }
 
 	    $templateData = str_replace('$RELATIONS$', implode("\n\n", $relationsView), $templateData);
+	    $templateData = str_replace('$MTM_RELATIONS$', implode("\n\n", $manyToManyRelationsView), $templateData);
 	    $templateData = str_replace('$JSRELATIONS$', implode("\n\n", $relationsViewJs), $templateData);
 	    $templateData = str_replace('$FILE$', $hasFileUpload, $templateData);
 	    $templateData = fill_template($this->commandData->dynamicVars, $templateData);
@@ -322,7 +324,7 @@ class ViewGenerator extends BaseGenerator
 	    {
 		    if($field->htmlType == 'file')
 		    {
-			    $hasFileUpload = ", 'files' => true";
+			    $hasFileUpload = ", 'files' => true, 'enctype' => 'multipart/form-data'";
 		    }
 	    }
 

@@ -9,8 +9,9 @@ use $NAMESPACE_REQUEST$\Update$MODEL_NAME$Request;
 use $NAMESPACE_REPOSITORY$\$MODEL_NAME$Repository;
 use Flash;
 use $NAMESPACE_APP$\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Storage;
 use Response;
-$MANY_TO_MANY_MODEL_REPOSITORIES$
+$MODEL_REPOSITORIES$
 
 class $MODEL_NAME$Controller extends AppBaseController
 {
@@ -58,6 +59,8 @@ class $MODEL_NAME$Controller extends AppBaseController
         $input = $request->all();
 
         $$MODEL_NAME_CAMEL$ = $this->$MODEL_NAME_CAMEL$Repository->create($input);
+
+        $FILE_STORE$
 
         $MORPH_ONE$
 
@@ -129,7 +132,11 @@ class $MODEL_NAME$Controller extends AppBaseController
             return redirect(route('$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$.index'));
         }
 
+        $FILE_CHECK$
+
         $$MODEL_NAME_CAMEL$ = $this->$MODEL_NAME_CAMEL$Repository->update($request->all(), $id);
+
+        $FILE_UPDATE$
 
         $STORE_RELATIONS$
 
