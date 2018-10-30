@@ -243,6 +243,7 @@ class ViewGenerator extends BaseGenerator
 
 	    $relationsView   = [];
 	    $relationsViewJs = [];
+	    $manyToManyRelationsView = [];
 
 	    foreach ($fields as $field)
 	    {
