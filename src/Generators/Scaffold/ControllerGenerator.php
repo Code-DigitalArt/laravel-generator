@@ -68,7 +68,9 @@ class ControllerGenerator extends BaseGenerator
 	    {
 	    	if($field->htmlType == 'file'){
 			    $fileStore[] = "if(\$request->hasFile('".$field->name."')){".PHP_EOL.
-				    "\$".$cc_model_name."->signature_file = \$request->".$field->name."->store('".$field->name."');".PHP_EOL.
+				    '$fileData = pathinfo($request->file("'.$field->name.'")->getClientOriginalName());'.PHP_EOL.
+				    '$fileName = $fileData[\'filename\'] . "_". str_random(3) . time() . \'.\' . $fileData[\'extension\'];'.PHP_EOL.
+				    '$'.$cc_model_name.'->'.$field->name.' = $request->'.$field->name.'->storeAs(\''.$field->name.'\', $fileName);'.PHP_EOL.
 				    "$".$cc_model_name."->save();".PHP_EOL.
 			    "}".PHP_EOL;
 			    $fileCheck[] = 'if(!empty($'.$cc_model_name.'->'.$field->name.')){'.PHP_EOL.
