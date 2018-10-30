@@ -122,8 +122,8 @@ class ControllerGenerator extends BaseGenerator
 				    case 'mt1':
 				    case 'mtm':
 				    case 'pmm':
-				        $getModelRepos[]       ='$'.$plural_cc_relation.' = $this->'.$cc_relation.'Repository->all();';
-				        $sendModelRepos[]      = "->with('".$plural_cc_relation."', \$".$plural_cc_relation.")";
+				        $getModelRepos[]       ='$'.$cc_relation.' = $this->'.$cc_relation.'Repository->all();';
+				        $sendModelRepos[]      = "->with('".$cc_relation."', \$".$cc_relation.")";
 					    break;
 				    default:
 					    break;
