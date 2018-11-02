@@ -46,6 +46,7 @@ class ControllerGenerator extends BaseGenerator
 	    $fileStore           = [];
 	    $fileCheck           = [];
 	    $fileUpdate          = [];
+	    $hasManyFileStore    = [];
 
 	    $fieldsFile          = $this->commandData->config->options["fieldsFile"];
 	    $fieldsFileLocation  = substr($fieldsFile, 0, strrpos($fieldsFile, "/") +1);
@@ -103,6 +104,7 @@ class ControllerGenerator extends BaseGenerator
 			    $constructModelRepos[] = '$this->'.$cc_relation.'Repository = $'.$cc_relation.'Repo;';
 			    $modelRepositories[]   = 'use App\Repositories\\'.$relation_name.'Repository;';
 			    $varModelRepos[]       = ', '.$relation_name.'Repository $'.  $cc_relation. 'Repo';
+			    $hasFile               = false;
 
 			    switch ($relationType)
 			    {
@@ -110,7 +112,7 @@ class ControllerGenerator extends BaseGenerator
 					    break;
 				    case '1tm':
 				    case 'hmt':
-				        $store_relations[] = 'if($request->input(\''.$cc_relation.'\') != null){'.'$'.$cc_model_name."->".$plural_cc_relation."()->createMany(\$request->input('.$cc_relation.'));}";
+				        $store_relations[] = 'if($request->input(\''.$cc_relation.'\') != null)'.PHP_EOL.'{'.PHP_EOL.'$'.$cc_model_name."->".$plural_cc_relation."()->createMany(\$request->input('$cc_relation'));}";
 				        $getModelRepos[]       ='$'.$plural_cc_relation.' = $this->'.$cc_relation.'Repository->all();';
 				        $sendModelRepos[]      = "->with('".$plural_cc_relation."', \$".$plural_cc_relation.")";
 				        break;
@@ -122,8 +124,8 @@ class ControllerGenerator extends BaseGenerator
 				    case 'mt1':
 				    case 'mtm':
 				    case 'pmm':
-				        $getModelRepos[]       ='$'.$cc_relation.' = $this->'.$cc_relation.'Repository->all();';
-				        $sendModelRepos[]      = "->with('".$cc_relation."', \$".$cc_relation.")";
+				        $getModelRepos[]       ='$'.$plural_cc_relation.' = $this->'.$plural_cc_relation.'Repository->all();';
+				        $sendModelRepos[]      = "->with('".$plural_cc_relation."', \$".$plural_cc_relation.")";
 					    break;
 				    default:
 					    break;
@@ -148,9 +150,30 @@ class ControllerGenerator extends BaseGenerator
 						    $constructModelRepos[] = '$this->'.$cc_foreign_model.'Repository = $'.$cc_foreign_model.'Repo;';
 					    }
 				    }
-				    if($field->htmlType == 'file'){
 
+				    if($field->htmlType == 'file'){
+				    	$hasFile = true;
+					    $hasManyFileStore[] =
+						    'if(!empty($requestFiles[$i]["'.$field->name.'"])){'.PHP_EOL.
+						    '$fileData = pathinfo($requestFiles[$i]["'.$field->name.'"]->getClientOriginalName());'.PHP_EOL.
+						    '$fileName = $fileData[\'filename\'] . "_". str_random(3) . time() . \'.\' . $fileData[\'extension\'];'.PHP_EOL.
+						    '$requestData[$i]["'.$field->name.'"] = $request->file("'.$relation_name.'.$i.'.$field->name.'")->storeAs("'.$field->name.'", $fileName);'.
+						    "}".PHP_EOL;
 				    }
+			    }
+
+			    if($hasFile){
+				    $generateHasManyFileStore = str_replace
+					    ('$FILE_STORE$', implode("\n", $hasManyFileStore), 'if($request->input(\''.$relation_name.'\') != null)'.PHP_EOL.'{'.PHP_EOL.
+					    '$requestData = $request->input("'.$relation_name.'");'.PHP_EOL.
+					    '$requestFiles = $request->file(["'.$relation_name.'"]);'.PHP_EOL.
+					    'for($i = 1; $i < count($requestData) + 1; $i++){'.PHP_EOL.
+					    '$FILE_STORE$'.PHP_EOL.
+					    '}'.
+					    '$'.$cc_model_name."->".$plural_cc_relation."()->createMany(\$requestData);".
+					    '}'.PHP_EOL);
+				    array_pop($store_relations);
+				    array_push($store_relations, $generateHasManyFileStore);
 			    }
 		    }
 	    }
